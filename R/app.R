@@ -16,6 +16,7 @@ library(ggplot2)
 library(grid)
 library(png)
 library(devtools)
+library(data.table)
 
 
 
@@ -95,7 +96,8 @@ server <- function(input, output, session) {
     validate(need(ext == "csv", "Invalid file. Please upload a .csv file"))
     fread(input$csv_input$datapath)
   })
-  
+  # where the functions are stored
+  source("CU_FU.R", local = TRUE)
   # When ever a new .csv file is uploaded calculate the CU and FU using CU_FU function
   # we want to calculate CU and FU from data_input()
   calculate_CU_FU <- reactive({
@@ -107,7 +109,7 @@ server <- function(input, output, session) {
   calculate_LT10 <- reactive({
     PredictLT10 <- LT10(calculate_CU_FU())
     PredictLT10
-  })
+#  })
   # we want to calculate LT50
   calculate_LT50 <- reactive({
     PredictLT50 <- LT50(calculate_CU_FU())
@@ -119,7 +121,7 @@ server <- function(input, output, session) {
     PredictLT90
   })
   
-#  })
+  })
 
   # plot LT10
   
@@ -190,7 +192,7 @@ server <- function(input, output, session) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
-# }
+#}
 
 # Attempt to do with just one file for now
 
