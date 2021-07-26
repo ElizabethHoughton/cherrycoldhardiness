@@ -7,6 +7,7 @@
 #    http://shiny.rstudio.com/
 #
 
+# download packages
 library(shiny)
 library(shinydashboard)
 library("shinythemes")
@@ -16,24 +17,16 @@ library(grid)
 library(png)
 library(devtools)
 
-# These are required for data manipulation and modelling
-library(plyr)
-library(tidyverse)
-library(MuMIn)
-library(nlme)
-library(report)
-library(hydroGOF)
-library(Metrics)
-library(knitr)
-library(lubridate)
-library(zoo)
+
 
 # creates a description file
 # use_description()
 
-# Define UI for application that draws a histogram
-# You want to wrap the whole script in a function
-# CH <- function() {}
+# wrap entire shiny app in a function, create a NAMESPACE file too
+
+# CH <- function() {
+
+# the user interface
 ui <- fluidPage(theme = shinytheme("flatly"),
                 # Navbar title
                 navbarPage("Sweet Cherry Cold Hardiness Estimations",
@@ -64,8 +57,10 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                              sidebarLayout(
                                sidebarPanel(
                                  title = "Inputs",
-                                 fileInput("csv_input", "Select CSV File to Import", accept = ".csv"),
-                                 actionButton("run_button", "Run Analysis")
+                                 fileInput("csv_input", "Select CSV File to Import", accept = ".csv", multiple = TRUE),
+                                 actionButton("run_button", "Run Analysis"),
+                                 #Add a button for saving any calculated corrections as a .csv
+                                 downloadButton("downloadData", "Save results")
                                ),
                                mainPanel(
                                  tabsetPanel(
@@ -92,16 +87,44 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 # Define server logic required
 # I think adding 'session' into the function allows you to access the functions created in your LT.R file
 server <- function(input, output, session) {
-  # data input as a data.table called "data_input"
+  # data input as a data.table called "data_input" (data.table is similar in function to data.frame)
   data_input <- reactive({
     req(input$csv_input)
+    # gives error code if not a .csv file
+    ext <- tools::file_ext(input$csv_input$name)
+    validate(need(ext == "csv", "Invalid file. Please upload a .csv file"))
     fread(input$csv_input$datapath)
   })
+  
+  # When ever a new .csv file is uploaded calculate the CU and FU using CU_FU function
+  # we want to calculate CU and FU from data_input()
+  calculate_CU_FU <- reactive({
+    CUFUcalculations <- CU_FU(data_input())
+    CUFUcalculations
+  })
+
+  # we want to calculate LT10
+  calculate_LT10 <- reactive({
+    PredictLT10 <- LT10(calculate_CU_FU())
+    PredictLT10
+  })
+  # we want to calculate LT50
+  calculate_LT50 <- reactive({
+    PredictLT50 <- LT50(calculate_CU_FU())
+    PredictLT50
+  })
+  # we want to calculate LT10
+  calculate_LT90 <- reactive({
+    PredictLT90 <- LT90(calculate_CU_FU())
+    PredictLT90
+  })
+  
+#  })
 
   # plot LT10
   
   plot_LT10 <- eventReactive(input$run_button,
-    {plot(LT10 ~ YYYMMDD, data = data_input, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+    {plot(LT10 ~ YYYMMDD, data = calculate_LT10(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
          main= "Lethal Temperature for 10% Bud Damage",
          pch= 20,
          xlab="Date", 
@@ -119,7 +142,7 @@ server <- function(input, output, session) {
   # plot LT50
   
   plot_LT50 <- eventReactive(input$run_button,
-     {plot(LT50 ~ YYYMMDD, data = data_input, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+     {plot(LT50 ~ YYYMMDD, data = calculate_LT50(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
            main= "Lethal Temperature for 50% Bud Damage",
            pch= 20,
            xlab="Date", 
@@ -137,7 +160,7 @@ server <- function(input, output, session) {
   # plot LT90
   
   plot_LT90 <- eventReactive(input$run_button,
-    {plot(LT90 ~ YYYMMDD, data = data_input, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+    {plot(LT90 ~ YYYMMDD, data = calculate_LT90(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
           main= "Lethal Temperature for 90% Bud Damage",
           pch= 20,
           xlab="Date", 
@@ -152,10 +175,22 @@ server <- function(input, output, session) {
   
   output$plot_LT90 <- renderPlot(plot_LT90())
   
+  
+  # Downloadable csv of corrected areas ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$dataset, "Lethal_Temp_Estimates.csv",".csv", sep = "") # input$dataset might not make sense here
+    },
+    content = function(file) {
+      write.csv(data, file)
+    }
+  )
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+# }
 
 # Attempt to do with just one file for now
 
