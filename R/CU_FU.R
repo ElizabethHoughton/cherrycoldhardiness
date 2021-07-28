@@ -5,6 +5,10 @@
 #' @details 
 #' Calculates chilling and focing units based on work by Neilsen et al. (2015)
 #' 
+#' @param data_input the user uploaded .csv file
+#' 
+#' @return the calculated 90 percent lethal temperatures
+#' 
 #' @import dplyr
 #' 
 #' @export

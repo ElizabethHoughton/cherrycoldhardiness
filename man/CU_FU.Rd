@@ -6,6 +6,12 @@
 \usage{
 CU_FU(data_input = NULL)
 }
+\arguments{
+\item{data_input}{the user uploaded .csv file}
+}
+\value{
+the calculated 90 percent lethal temperatures
+}
 \description{
 Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
 }

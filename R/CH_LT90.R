@@ -5,6 +5,11 @@
 #' @details
 #' Calculates the 90 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 #' 
+#' @param Calculated_CU_FU a dataframe of calculated parameters
+#' @param Model90 model for calculating 90 percent lethal temperatures
+#' 
+#' @return the calculated 90 percent lethal temperatures
+#' 
 #' @import dplyr
 #' 
 #' @export
@@ -16,5 +21,7 @@ CH_LT90 <- function(Calculated_CU_FU=NULL){
   # Calculate confidence intervals and create data frames out of them
   PredictLT90$LT90.CIUpper <- (PredictLT90$fit + PredictLT90$se.fit*1.96)
   PredictLT90$LT90.CILower <- (PredictLT90$fit - PredictLT90$se.fit*1.96)
+  # add the YYYYMMDD column from Calculated_CU_FU
+  PredictLT90$YYYYMMDD <- Calculated_CU_FU$YYYYMMDD
   PredictLT90
 }

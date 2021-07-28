@@ -7,8 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "elizabeth.houghton@ubc.ca")
 Description: A shiny app for calculating sweet cherry cold hardiness in the Okanagan Valley, BC Canada from hourly temperature data.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports: 

@@ -6,6 +6,14 @@
 \usage{
 CH_LT10(Calculated_CU_FU = NULL)
 }
+\arguments{
+\item{Calculated_CU_FU}{a dataframe of calculated parameters}
+
+\item{Model10}{model for calculating 10 percent lethal temperatures}
+}
+\value{
+the calculated 10 percent lethal temperatures
+}
 \description{
 Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
 }
