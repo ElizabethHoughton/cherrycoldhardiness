@@ -23,6 +23,12 @@ CH_LT10 <- function(Calculated_CU_FU=NULL){
   PredictLT10$LT10.CILower <- (PredictLT10$fit - PredictLT10$se.fit*1.96)
   # add the YYYYMMDD column from Calculated_CU_FU
   PredictLT10$YYYYMMDD <- Calculated_CU_FU$YYYYMMDD
+  # rename fit to LT50
+  PredictLT10 <- PredictLT10 %>% 
+    dplyr::rename(LT10 = "fit")
+  # rename se.fit to LT50_standard_error
+  PredictLT10 <- PredictLT10 %>% 
+    dplyr::rename(LT10_standard_error = "se.fit")
   PredictLT10
 }
 

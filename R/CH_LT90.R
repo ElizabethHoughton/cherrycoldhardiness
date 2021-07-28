@@ -22,6 +22,12 @@ CH_LT90 <- function(Calculated_CU_FU=NULL){
   PredictLT90$LT90.CIUpper <- (PredictLT90$fit + PredictLT90$se.fit*1.96)
   PredictLT90$LT90.CILower <- (PredictLT90$fit - PredictLT90$se.fit*1.96)
   # add the YYYYMMDD column from Calculated_CU_FU
-  PredictLT90$YYYYMMDD <- Calculated_CU_FU$YYYYMMDD
+  PredictLT90$YYYYMMDD90 <- Calculated_CU_FU$YYYYMMDD
+  # rename fit to LT50
+  PredictLT90 <- PredictLT90 %>% 
+    dplyr::rename(LT90 = "fit")
+  # rename se.fit to LT50_standard_error
+  PredictLT90 <- PredictLT90 %>% 
+    dplyr::rename(LT90_standard_error = "se.fit")
   PredictLT90
 }

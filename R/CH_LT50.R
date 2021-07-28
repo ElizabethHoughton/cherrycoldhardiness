@@ -22,6 +22,15 @@ CH_LT50 <- function(Calculated_CU_FU=NULL){
   PredictLT50$LT50.CIUpper <- (PredictLT50$fit + PredictLT50$se.fit*1.96)
   PredictLT50$LT50.CILower <- (PredictLT50$fit - PredictLT50$se.fit*1.96)
   # add the YYYYMMDD column from Calculated_CU_FU
-  PredictLT50$YYYYMMDD <- Calculated_CU_FU$YYYYMMDD
+  PredictLT50$YYYYMMDD50 <- Calculated_CU_FU$YYYYMMDD
+  # rename fit to LT50
+  PredictLT50 <- PredictLT50 %>% 
+    dplyr::rename(LT50 = "fit")
+  # rename se.fit to LT50_standard_error
+  PredictLT50 <- PredictLT50 %>% 
+    dplyr::rename(LT50_standard_error = "se.fit")
   PredictLT50
 }
+
+Calculated_CU_FU <- read.csv(file='/Users/Elizabeth/Desktop/TestData/TestData_CU_FU.csv')
+CH_LT50(Calculated_CU_FU)

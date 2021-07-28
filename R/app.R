@@ -72,13 +72,13 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 # plot LT10
 
 draw_plot_LT10 <- function(Calculated_LT10)
-{plot(Calculated_LT10$YYYYMMDD, Calculated_LT10$fit, # CHANGE THIS IF YOU RENAME YOUR data_input 
+{plot(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
       main= "Lethal Temperature for 10 Percent Bud Damage",
       pch= NA,
       xlab="Date", 
       ylab="LT10 (˚C)",
       cex.lab=1, ylim=c(-30, 0))
-  lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+  lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
   lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
   lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
   legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
@@ -88,31 +88,30 @@ draw_plot_LT10 <- function(Calculated_LT10)
 # plot LT50
 
 draw_plot_LT50 <- function(Calculated_LT50)
-{plot(Calculated_LT50$YYYYMMDD, Calculated_LT50$fit, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+{plot(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
       main= "Lethal Temperature for 50 Percent Bud Damage",
       pch= NA,
       xlab="Date", 
       ylab="LT50 (˚C)",
       cex.lab=1, ylim=c(-30, 0))
-  lines(Calculated_LT50$YYYYMMDD, Calculated_LT50$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-  lines(Calculated_LT50$YYYYMMDD, Calculated_LT50$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-  lines(Calculated_LT50$YYYYMMDD, Calculated_LT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+  lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+  lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+  lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
   legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
 }
 
 # plot LT90
 
 draw_plot_LT90 <- function(Calculated_LT90)
-{plot(Calculated_LT90$YYYYMMDD, Calculated_LT90$fit, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+{plot(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
       main= "Lethal Temperature for 90 Percent Bud Damage",
       pch=NA,
       xlab="Date", 
       ylab="LT90 (˚C)",
-      cex.main=1.25, 
       cex.lab=1, ylim=c(-30, 0))
-  lines(Calculated_LT90$YYYYMMDD, Calculated_LT90$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-  lines(Calculated_LT90$YYYYMMDD, Calculated_LT90$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-  lines(Calculated_LT90$YYYYMMDD, Calculated_LT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+  lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+  lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+  lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
   legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
 }
 
@@ -162,6 +161,16 @@ server <- function(input, output, session) {
     LT90calc
     })
   
+  # merge Calculated_LT10, Calculated_LT50, and Calculated_LT90, select only important columns (for download)
+  All_LTs <- reactive({
+    LTs <- cbind(Calculated_LT10(), Calculated_LT50(), Calculated_LT90())
+    LTs <- LTs %>% dplyr::select(YYYYMMDD, LT10, LT50, LT90)
+    # round to 2 decimal places
+    LTs$LT10 <- format(round(LTs$LT10, 2), nsmall = 2) 
+    LTs$LT50 <- format(round(LTs$LT50, 2), nsmall = 2)
+    LTs$LT90 <- format(round(LTs$LT90, 2), nsmall = 2)
+    LTs
+  })
   
   # When the run button is hit, pltos should be drawn
   # plot LT10
@@ -186,14 +195,14 @@ server <- function(input, output, session) {
   output$plot_LT90 <- renderPlot(plot_LT90())
   
   # Downloadable csv of LTs ----
-#  output$downloadData <- downloadHandler(
-#    filename = function() {
-#      paste(input$dataset, "Lethal_Temp_Estimates.csv",".csv", sep = "") # input$dataset might not make sense here
-#    },
-#    content = function(file) {
-#      write.csv(data, file)
-#    }
-#  )
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("Lethal_Temp_Estimates",".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(All_LTs(), file, row.names = FALSE)
+    }
+  )
 }
 
 # Run the application 
