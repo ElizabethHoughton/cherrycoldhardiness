@@ -9,7 +9,7 @@
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   # select columns of interest
-  data_input <- data_input %>% select(5:10)
+  data_input <- data_input[,c(5:10)]
 
 # rename columns
   colnames(data_input) <- c("Date", "Year", "Month", "Day", "Time", "Temp")
@@ -24,7 +24,7 @@ data_input <- data_input[
 ]
 
 # replace any NA values with the average of the above and below temp values (if needed)
-data_input$Temp <- (na.approx(data_input$Temp, rule = 2))
+data_input$Temp <- (zoo::na.approx(data_input$Temp, rule = 2))
 
 data_input_max <- data_input #save to calculate daily max and lag temps
 
@@ -32,7 +32,7 @@ data_input_max <- data_input #save to calculate daily max and lag temps
 
 # Calculate CU
 
-data_input <- data_input %>% mutate(CU = case_when(Temp < -2 ~ 0, 
+data_input <- data_input %>% dplyr::mutate(CU = case_when(Temp < -2 ~ 0, 
                                                  Temp >= 18 ~ -1, 
                                                  Temp >= 16 & Temp < 18 ~ -0.5,
                                                  Temp < 16 & Temp >= -2 ~
@@ -43,7 +43,7 @@ data_input <- data_input %>% mutate(CU = case_when(Temp < -2 ~ 0,
 data_input <- data.frame(data_input, CU_acc=cumsum(data_input$CU))
 
 #remove the first NA value with na.omit
-data_input <- na.omit(data_input)
+data_input <- stats::na.omit(data_input)
 
 # Anything after the minimum CU_acc, assign the accumulative CU, everything before assign 0
 # which.min outputs the row that the minimum value exists in
@@ -63,23 +63,23 @@ data_input_final <- merge(data_input, data_input_2, by = c("Date", "Year", "Mont
 data_input_final[is.na(data_input_final)] <- 0
 
 # If CU_acc_final below 1119, assign acquiring, if CU_acc_final above 1119, assign complete
-data_input_final <- data_input_final %>% mutate(CU_state = case_when(CU_acc_final < 1119 ~ 'acquiring', 
+data_input_final <- data_input_final %>% dplyr::mutate(CU_state = case_when(CU_acc_final < 1119 ~ 'acquiring', 
                                                              CU_acc_final >= 1119 ~ 'complete'))
 
 # For the model, have a column that is 0-1119 (Call it CU_1119)
-data_input_final <- data_input_final %>% mutate(CU_1119 = case_when(CU_acc_final < 1119 ~ CU_acc_final, 
+data_input_final <- data_input_final %>% dplyr::mutate(CU_1119 = case_when(CU_acc_final < 1119 ~ CU_acc_final, 
                                                                   CU_acc_final >= 1119 ~ 1119))
 
 # FU Calculations
 # FU will begin accumulation after 1119 CU have been accumulated
 # Subset data that has complete the chilling requirements
 
-data_input_FU <- data_input_final %>% filter(CU_state=="complete")
+data_input_FU <- data_input_final %>% dplyr::filter(CU_state=="complete")
 
 # calculate the FU for these times
 # From Neilsen et al. 2015
 
-data_input_FU <- data_input_FU %>% mutate(FU = case_when(Temp < 5 ~ 0, 
+data_input_FU <- data_input_FU %>% dplyr::mutate(FU = case_when(Temp < 5 ~ 0, 
                                                     Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
 
 # Make a new column (FU_acc) that is the accumulation of all the calculated FU from each day prior and the current day
@@ -94,7 +94,7 @@ data_input_final <- merge(data_input_final, data_input_FU, by = c("Date", "Year"
 data_input_final[is.na(data_input_final)] <- 0
 
 # Optimal forcing reached at 68 FU, assign FU_state 
-data_input_final <- data_input_final %>% mutate(FU_state = case_when(CU_acc_final < 1119 ~ 'not_applicable',
+data_input_final <- data_input_final %>% dplyr::mutate(FU_state = case_when(CU_acc_final < 1119 ~ 'not_applicable',
                                                                    FU_acc < 68 ~ 'acquiring', 
                                                                    FU_acc >= 68 ~ 'complete'))
 
@@ -102,7 +102,7 @@ data_input_final <- data_input_final %>% mutate(FU_state = case_when(CU_acc_fina
 # Now, to bring to the resolution of daily maximum air temperature, keep only the daily data from the end (10:00) at each day (most growers will not be expecting an hourly resolution anyways)
 
 data_input_daily <- data_input_final %>% 
-  mutate(Hour = hour(Time),
+  dplyr::mutate(Hour = hour(Time),
          Minute = minute(Time),
          Second = second(Time)) %>%  
   dplyr::filter(Hour == 10 & Minute == 0 & Second == 0)
@@ -114,7 +114,7 @@ data_input_daily$FU_acc_log <- log(data_input_daily$FU_acc+10)
 ## Calculate Daily Air Temperatures from Hourly Data
 # Aggregate by Year, Month, Day
 # Max temp
-data_input_dailymax <- aggregate(Temp ~ Year + Month + Day, data_input_max, max)
+data_input_dailymax <- stats::aggregate(Temp ~ Year + Month + Day, data_input_max, max)
 
 # rename Temp to Temp_max
 data_input_dailymax <- data_input_dailymax %>% 
@@ -139,7 +139,7 @@ CU_FU1 <- CU_FU1[
 
 #get a YYYYMMDD formatted date to use when graphing
 CU_FU1 <- CU_FU1 %>%
-  mutate(YYYYMMDD = make_date(Year, Month, Day))
+  dplyr::mutate(YYYYMMDD = make_date(Year, Month, Day))
 
 # rename it for the webpage (call CU_FU1 so not to be confused with CU_FU function)
 
@@ -152,7 +152,7 @@ CUFUcalculations <- as.data.frame(CU_FU1)
 #(FU_acc_log)
 #(FU_state)
 
-CUFUcalculations <- CUFUcalculations %>% select(c("YYYYMMDD", 
+CUFUcalculations <- CUFUcalculations %>% dplyr::select(c("YYYYMMDD", 
                                                   "Temp_max.lag1", 
                                                   "CU_1119", 
                                                   "FU_acc", 

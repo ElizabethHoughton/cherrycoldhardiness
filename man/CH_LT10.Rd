@@ -6,9 +6,6 @@
 \usage{
 CH_LT10(Calculated_CU_FU = NULL)
 }
-\value{
-data frame of lethal temperatures
-}
 \description{
 Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
 }

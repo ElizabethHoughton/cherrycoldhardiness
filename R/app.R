@@ -109,7 +109,7 @@ server <- function(input, output, session) {
    # plot LT10
   
   draw_plot_LT10 <- function(Calculated_LT10)
-                             {plot(LT10 ~ YYYMMDD, data = Calculated_LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
+                             {plot(fit ~ YYYYMMDD, data = Calculated_LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
                                    main= "Lethal Temperature for 10% Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
@@ -117,16 +117,16 @@ server <- function(input, output, session) {
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
-                               lines(PredictLT10$YYYMMDD, PredictLT10$Model10, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-                               lines(PredictLT10$YYYMMDD, PredictLT101$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-                               lines(PredictLT10$YYYMMDD, PredictLT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT10$YYYYMMDD, PredictLT10$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT10$YYYYMMDD, PredictLT101$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT10$YYYYMMDD, PredictLT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
                              }
 
   
   # plot LT50
   
   draw_plot_LT50 <- function(Calculated_LT50)
-                              {plot(LT50 ~ YYYMMDD, data = Calculated_LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+                              {plot(fit ~ YYYYMMDD, data = Calculated_LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
                                    main= "Lethal Temperature for 50% Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
@@ -134,15 +134,15 @@ server <- function(input, output, session) {
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
-                               lines(PredictLT50$YYYMMDD, PredictLT50$Model50, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-                               lines(PredictLT50$YYYMMDD, PredictLT501$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-                               lines(PredictLT50$YYYMMDD, PredictLT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT50$YYYYMMDD, PredictLT50$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT50$YYYYMMDD, PredictLT501$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT50$YYYYMMDD, PredictLT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
                              }
   
   # plot LT90
   
   draw_plot_LT90 <- function(Calculated_LT90)
-                              {plot(LT90 ~ YYYMMDD, data = Calculated_LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+                              {plot(fit ~ YYYYMMDD, data = Calculated_LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
                                    main= "Lethal Temperature for 90% Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
@@ -150,9 +150,9 @@ server <- function(input, output, session) {
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
-                               lines(PredictLT90$YYYMMDD, PredictLT90$Model90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-                               lines(PredictLT90$YYYMMDD, PredictLT901$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-                               lines(PredictLT90$YYYMMDD, PredictLT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT90$YYYYMMDD, PredictLT90$Model90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT90$YYYYMMDD, PredictLT901$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT90$YYYYMMDD, PredictLT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
   }
   
   
@@ -177,7 +177,6 @@ server <- function(input, output, session) {
   
   output$plot_LT90 <- renderPlot(plot_LT90())
   
-  
   # Downloadable csv of LTs ----
 #  output$downloadData <- downloadHandler(
 #    filename = function() {
@@ -193,7 +192,6 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server)
 
 }
-
 
 # NOTES
 
