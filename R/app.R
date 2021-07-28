@@ -7,6 +7,8 @@
 #' 
 #' @return web application, data frame of lethal temperatures
 #' 
+#' @import shiny shinydashboard shinythemes ggplot2 png data.table
+#' 
 #' @export
 cherrycoldhardiness <- function() {
 
@@ -44,7 +46,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                  fileInput("csv_input", "Select CSV File to Import", accept = ".csv", multiple = TRUE),
                                  actionButton("run_button", "Run Analysis"),
                                  #Add a button for saving any calculated corrections as a .csv
-                                 downloadButton("downloadData", "Save results")
+                                 downloadButton("downloadData", "Save results") #not currently functional
                                ),
                                mainPanel(
                                  tabsetPanel(
@@ -110,10 +112,10 @@ server <- function(input, output, session) {
   
   draw_plot_LT10 <- function(Calculated_LT10)
                              {plot(fit ~ YYYYMMDD, data = Calculated_LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
-                                   main= "Lethal Temperature for 10% Bud Damage",
+                                   main= "Lethal Temperature for 10 Percent Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
-                                   ylab="LT10 (˚C)",
+                                   ylab="LT10",
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
@@ -127,10 +129,10 @@ server <- function(input, output, session) {
   
   draw_plot_LT50 <- function(Calculated_LT50)
                               {plot(fit ~ YYYYMMDD, data = Calculated_LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-                                   main= "Lethal Temperature for 50% Bud Damage",
+                                   main= "Lethal Temperature for 50 Percent Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
-                                   ylab="LT50 (˚C)",
+                                   ylab="LT50",
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
@@ -143,14 +145,14 @@ server <- function(input, output, session) {
   
   draw_plot_LT90 <- function(Calculated_LT90)
                               {plot(fit ~ YYYYMMDD, data = Calculated_LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-                                   main= "Lethal Temperature for 90% Bud Damage",
+                                   main= "Lethal Temperature for 90 Percent Bud Damage",
                                    pch= 20,
                                    xlab="Date", 
-                                   ylab="LT90 (˚C)",
+                                   ylab="LT90",
                                    cex.main=1.25, 
                                    xlim= c(300, 460),
                                    cex.lab=1, ylim=c(-30, 0))
-                               lines(PredictLT90$YYYYMMDD, PredictLT90$Model90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT90$YYYYMMDD, PredictLT90$fit, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
                                lines(PredictLT90$YYYYMMDD, PredictLT901$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
                                lines(PredictLT90$YYYYMMDD, PredictLT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
   }

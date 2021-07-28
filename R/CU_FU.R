@@ -5,6 +5,8 @@
 #' @details 
 #' Calculates chilling and focing units based on work by Neilsen et al. (2015)
 #' 
+#' @import dplyr
+#' 
 #' @export
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
@@ -139,7 +141,7 @@ CU_FU1 <- CU_FU1[
 
 #get a YYYYMMDD formatted date to use when graphing
 CU_FU1 <- CU_FU1 %>%
-  dplyr::mutate(YYYYMMDD = make_date(Year, Month, Day))
+  dplyr::mutate(YYYYMMDD = lubridate::make_date(Year, Month, Day))
 
 # rename it for the webpage (call CU_FU1 so not to be confused with CU_FU function)
 

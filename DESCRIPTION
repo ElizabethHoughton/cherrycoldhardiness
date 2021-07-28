@@ -22,6 +22,7 @@ Imports:
     zoo,
     stats,
     nlme,
-    car
+    car,
+    lubridate
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
