@@ -1,18 +1,14 @@
-# Manipulate .csv inputs to calculate CU, FU, and FU state (data_input)
-library(plyr)
-library(tidyverse)
-library(MuMIn)
-library(nlme)
-library(report)
-library(hydroGOF)
-library(Metrics)
-library(knitr)
-library(lubridate)
-library(zoo)
-
-# select for column 5 to 10
+#' Calculate chilling units and forcing units
+#' 
+#' Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
+#' 
+#' @details 
+#' Calculates chilling and focing units based on work by Neilsen et al. (2015)
+#' 
+#' @export
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
+  # select columns of interest
   data_input <- data_input %>% select(5:10)
 
 # rename columns

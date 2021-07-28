@@ -1,31 +1,14 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-# download packages
-library(shiny)
-library(shinydashboard)
-library("shinythemes")
-library(markdown)
-library(ggplot2)
-library(grid)
-library(png)
-library(devtools)
-library(data.table)
-
-
-
-# creates a description file
-# use_description()
-
-# wrap entire shiny app in a function, create a NAMESPACE file too
-
-# CH <- function() {
+#' Shiny app for cold hardiness estimations
+#' 
+#' Web document to calculate cold hardiness estimations
+#' 
+#' @details Calculates the 10. 50, and 90 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
+#' 
+#' 
+#' @return web application, data frame of lethal temperatures
+#' 
+#' @export
+cherrycoldhardiness <- function() {
 
 # the user interface
 ui <- fluidPage(theme = shinytheme("flatly"),
@@ -106,18 +89,18 @@ server <- function(input, output, session) {
   
   # create a data frame out of data_input() with calculated LT using LT10/LT50/LT90 functions
   Calculated_LT10 <- reactive({
-    LT10calc <- LT10(Calculated_CU_FU())
+    LT10calc <- CH_LT10(Calculated_CU_FU())
     LT10calc
     })
     
   
   Calculated_LT50 <- reactive({
-    LT50calc <- LT50(Calculated_CU_FU())
+    LT50calc <- CH_LT50(Calculated_CU_FU())
     LT50calc
   })
   
   Calculated_LT90 <- reactive({
-    LT90calc <- LT90(Calculated_CU_FU())
+    LT90calc <- CH_LT90(Calculated_CU_FU())
     LT90calc
     })
   
@@ -209,7 +192,7 @@ server <- function(input, output, session) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
-#}
+}
 
 
 # NOTES
