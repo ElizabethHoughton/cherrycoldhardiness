@@ -20,18 +20,23 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                            tabPanel("About",
                                     # inputs for first tab pane;
                                     mainPanel(
-                                        h3("Title"), # size and text for paragraph
-                                        p("Paragraph text"),
+                                        h3("Modelling Approach for Sweet Cherry 
+                                           Cold Hardiness Estimations in the Okanagan 
+                                           Valley of British Columbia"), # size and text for paragraph
+                                        p("This model can be used to estimate the the cold hardiness of 
+                                          the sweet cherry cultivar ‘Sweetheart’ grafted on Mazzard 
+                                          rootstock within the Okanagan Valley of 
+                                          British Columbia."),
                                         br(),
                                         p("Paragraph text"),
-                                        img(height = 300, width = 400, src = "winterorchard.png"),
+                                        tags$img(height = 300, width = 400, src = "winterorchard.png"),
                                         br(),
                                         a(href="https://github.com/ElizabethHoughton/cherry-cold-hardiness", "GitHub"))), #active weblink to GitHub)),
                            # second tab panel
                            tabPanel("How to Use",
                                     mainPanel(
                                         h3("Instructions"), # size and text for paragraph
-                                        p("Instructions on what data in what format that they need to upload "),
+                                        p("To use this model, hourly temperature data is required..."),
                                         br(), #line break
                                         h3("Don't have your own data?"),
                                         p("This will only be here with instuctions to Gov. Canada Historic climate 
@@ -44,9 +49,13 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                sidebarPanel(
                                  title = "Inputs",
                                  fileInput("csv_input", "Select CSV File to Import", accept = ".csv", multiple = TRUE),
-                                 actionButton("run_button", "Run Analysis"),
+                                 actionButton("run_button", 
+                                              "Run Analysis",
+                                              style="margin-top: 12%"),
                                  #Add a button for saving any calculated corrections as a .csv
-                                 downloadButton("downloadData", "Save results") #not currently functional
+                                 downloadButton("downloadData", 
+                                                "Save results",
+                                                style= "margin-top: 12%") #not currently functional
                                ),
                                mainPanel(
                                  tabsetPanel(
@@ -73,7 +82,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 
 draw_plot_LT10 <- function(Calculated_LT10)
 {plot(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
-      main= "Lethal Temperature for 10 Percent Bud Damage",
+      main= "Lethal Temperature for 10% Bud Damage",
       pch= NA,
       xlab="Date", 
       ylab="LT10 (˚C)",
@@ -89,7 +98,7 @@ draw_plot_LT10 <- function(Calculated_LT10)
 
 draw_plot_LT50 <- function(Calculated_LT50)
 {plot(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-      main= "Lethal Temperature for 50 Percent Bud Damage",
+      main= "Lethal Temperature for 50% Bud Damage",
       pch= NA,
       xlab="Date", 
       ylab="LT50 (˚C)",
@@ -104,7 +113,7 @@ draw_plot_LT50 <- function(Calculated_LT50)
 
 draw_plot_LT90 <- function(Calculated_LT90)
 {plot(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-      main= "Lethal Temperature for 90 Percent Bud Damage",
+      main= "Lethal Temperature for 90% Bud Damage",
       pch=NA,
       xlab="Date", 
       ylab="LT90 (˚C)",
