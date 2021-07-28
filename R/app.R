@@ -86,107 +86,124 @@ ui <- fluidPage(theme = shinytheme("flatly"),
 # THEN WITH THIS DATA WE NEED TO DRAW THE PLOTS
 
 # Define server logic required
-# I think adding 'session' into the function allows you to access the functions created in your LT.R file
+# I think adding 'session' into the function allows you to access the functions created in your other .R files?
 server <- function(input, output, session) {
-  # data input as a data.table called "data_input" (data.table is similar in function to data.frame)
+  # data input as a data.table called "data_input" (data.table is similar in function to data.frame, this is reactive
+  # so you must call on it like it is a function from here on as "data_input()", will update with each new upload)
   data_input <- reactive({
-    req(input$csv_input)
-    # gives error code if not a .csv file
-    ext <- tools::file_ext(input$csv_input$name)
-    validate(need(ext == "csv", "Invalid file. Please upload a .csv file"))
-    fread(input$csv_input$datapath)
-  })
-  # where the functions are stored
-  source("CU_FU.R", local = TRUE)
-  # When ever a new .csv file is uploaded calculate the CU and FU using CU_FU function
-  # we want to calculate CU and FU from data_input()
-  calculate_CU_FU <- reactive({
-    CUFUcalculations <- CU_FU(data_input())
-    CUFUcalculations
-  })
-
-  # we want to calculate LT10
-  calculate_LT10 <- reactive({
-    PredictLT10 <- LT10(calculate_CU_FU())
-    PredictLT10
-#  })
-  # we want to calculate LT50
-  calculate_LT50 <- reactive({
-    PredictLT50 <- LT50(calculate_CU_FU())
-    PredictLT50
-  })
-  # we want to calculate LT10
-  calculate_LT90 <- reactive({
-    PredictLT90 <- LT90(calculate_CU_FU())
-    PredictLT90
+  req(input$csv_input)
+  # gives error code if not a .csv file
+  ext <- tools::file_ext(input$csv_input$name)
+  validate(need(ext == "csv", "Invalid file. Please upload a .csv file"))
+  fread(input$csv_input$datapath)
   })
   
+  # create a data frame out of data_input() with calculated CU and FU using CU_FU function
+  Calculated_CU_FU <- reactive({
+    CUFU <- CU_FU(data_input())
+    CUFU
+    })
+  
+  # create a data frame out of data_input() with calculated LT using LT10/LT50/LT90 functions
+  Calculated_LT10 <- reactive({
+    LT10calc <- LT10(Calculated_CU_FU())
+    LT10calc
+    })
+    
+  
+  Calculated_LT50 <- reactive({
+    LT50calc <- LT50(Calculated_CU_FU())
+    LT50calc
   })
+  
+  Calculated_LT90 <- reactive({
+    LT90calc <- LT90(Calculated_CU_FU())
+    LT90calc
+    })
+  
+ # The plots that will be drawn when your Run Analysis (or run_button) is hit, do not treat Calculate_LT10 as a function
+  # (like Calculated_LT10()) because it is within a function
+   # plot LT10
+  
+  draw_plot_LT10 <- function(Calculated_LT10)
+                             {plot(LT10 ~ YYYMMDD, data = Calculated_LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
+                                   main= "Lethal Temperature for 10% Bud Damage",
+                                   pch= 20,
+                                   xlab="Date", 
+                                   ylab="LT10 (˚C)",
+                                   cex.main=1.25, 
+                                   xlim= c(300, 460),
+                                   cex.lab=1, ylim=c(-30, 0))
+                               lines(PredictLT10$YYYMMDD, PredictLT10$Model10, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT10$YYYMMDD, PredictLT101$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT10$YYYMMDD, PredictLT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+                             }
 
+  
+  # plot LT50
+  
+  draw_plot_LT50 <- function(Calculated_LT50)
+                              {plot(LT50 ~ YYYMMDD, data = Calculated_LT50, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+                                   main= "Lethal Temperature for 50% Bud Damage",
+                                   pch= 20,
+                                   xlab="Date", 
+                                   ylab="LT50 (˚C)",
+                                   cex.main=1.25, 
+                                   xlim= c(300, 460),
+                                   cex.lab=1, ylim=c(-30, 0))
+                               lines(PredictLT50$YYYMMDD, PredictLT50$Model50, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT50$YYYMMDD, PredictLT501$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT50$YYYMMDD, PredictLT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+                             }
+  
+  # plot LT90
+  
+  draw_plot_LT90 <- function(Calculated_LT90)
+                              {plot(LT90 ~ YYYMMDD, data = Calculated_LT90, # CHANGE THIS IF YOU RENAMTE YOUR data_input 
+                                   main= "Lethal Temperature for 90% Bud Damage",
+                                   pch= 20,
+                                   xlab="Date", 
+                                   ylab="LT90 (˚C)",
+                                   cex.main=1.25, 
+                                   xlim= c(300, 460),
+                                   cex.lab=1, ylim=c(-30, 0))
+                               lines(PredictLT90$YYYMMDD, PredictLT90$Model90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+                               lines(PredictLT90$YYYMMDD, PredictLT901$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
+                               lines(PredictLT90$YYYMMDD, PredictLT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+  }
+  
+  
   # plot LT10
-  
-  plot_LT10 <- eventReactive(input$run_button,
-    {plot(LT10 ~ YYYMMDD, data = calculate_LT10(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-         main= "Lethal Temperature for 10% Bud Damage",
-         pch= 20,
-         xlab="Date", 
-         ylab="LT10 (˚C)",
-         cex.main=1.25, 
-         xlim= c(300, 460),
-         cex.lab=1, ylim=c(-30, 0))
-    lines(PredictLT10$YYYMMDD, PredictLT10$Model10, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-    lines(PredictLT10$YYYMMDD, PredictLT101$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-    lines(PredictLT10$YYYMMDD, PredictLT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+  plot_LT10 <- eventReactive(input$run_button,{
+    draw_plot_LT10(Calculated_LT10())
   })
   
   output$plot_LT10 <- renderPlot(plot_LT10())
   
   # plot LT50
-  
-  plot_LT50 <- eventReactive(input$run_button,
-     {plot(LT50 ~ YYYMMDD, data = calculate_LT50(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-           main= "Lethal Temperature for 50% Bud Damage",
-           pch= 20,
-           xlab="Date", 
-           ylab="LT50 (˚C)",
-           cex.main=1.25, 
-           xlim= c(300, 460),
-           cex.lab=1, ylim=c(-30, 0))
-    lines(PredictLT50$YYYMMDD, PredictLT50$Model50, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-    lines(PredictLT50$YYYMMDD, PredictLT501$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-    lines(PredictLT50$YYYMMDD, PredictLT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
+  plot_LT50 <- eventReactive(input$run_button,{
+    draw_plot_LT50(Calculated_LT50())
   })
   
   output$plot_LT50 <- renderPlot(plot_LT50())
   
   # plot LT90
-  
-  plot_LT90 <- eventReactive(input$run_button,
-    {plot(LT90 ~ YYYMMDD, data = calculate_LT90(), # CHANGE THIS IF YOU RENAMTE YOUR data_input 
-          main= "Lethal Temperature for 90% Bud Damage",
-          pch= 20,
-          xlab="Date", 
-          ylab="LT90 (˚C)",
-          cex.main=1.25, 
-          xlim= c(300, 460),
-          cex.lab=1, ylim=c(-30, 0))
-      lines(PredictLT90$YYYMMDD, PredictLT90$Model90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-      lines(PredictLT90$YYYMMDD, PredictLT901$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-      lines(PredictLT90$YYYMMDD, PredictLT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
-})
+  plot_LT90 <- eventReactive(input$run_button,{
+    draw_plot_LT90(Calculated_LT90())
+  })
   
   output$plot_LT90 <- renderPlot(plot_LT90())
   
   
-  # Downloadable csv of corrected areas ----
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      paste(input$dataset, "Lethal_Temp_Estimates.csv",".csv", sep = "") # input$dataset might not make sense here
-    },
-    content = function(file) {
-      write.csv(data, file)
-    }
-  )
+  # Downloadable csv of LTs ----
+#  output$downloadData <- downloadHandler(
+#    filename = function() {
+#      paste(input$dataset, "Lethal_Temp_Estimates.csv",".csv", sep = "") # input$dataset might not make sense here
+#    },
+#    content = function(file) {
+#      write.csv(data, file)
+#    }
+#  )
 }
 
 # Run the application 
@@ -194,6 +211,19 @@ shinyApp(ui = ui, server = server)
 
 #}
 
+
+# NOTES
+
+# a reactive expression looks like a function but it will only run the first time 
+# it is called and then it caches the results until it needs to be updated
+
+# you cant call things from within observeEvent (e.g. you cant create a "dataframe' 
+# from your functions applied to input_data this way)
+
+
+
+
+# EXTRA
 # Attempt to do with just one file for now
 
 # My current approach
@@ -256,3 +286,13 @@ shinyApp(ui = ui, server = server)
 #plotOutput("LT50"),
 #plotOutput("LT90")))
 #)
+
+
+#to validata data inputs? (error if other than .csv?)
+#data_input <- reactive({
+#  req(input$csv_input)
+  # gives error code if not a .csv file
+#  ext <- tools::file_ext(input$csv_input$name)
+#  validate(need(ext == "csv", "Invalid file. Please upload a .csv file"))
+#  fread(input$csv_input$datapath)
+#})

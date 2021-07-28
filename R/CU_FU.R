@@ -11,25 +11,17 @@ library(lubridate)
 library(zoo)
 
 # select for column 5 to 10
-CU_FU <- function(data_input) {
+CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   data_input <- data_input %>% select(5:10)
 
 # rename columns
-data_input <- data_input %>% 
-  rename(Date = "Date/Time (LST)")
-
-data_input <- data_input %>% 
-  rename(Time = "Time (LST)")
-
-data_input <- data_input %>% 
-  rename(Temp = "Temp (°C)")
-
+  colnames(data_input) <- c("Date", "Year", "Month", "Day", "Time", "Temp")
 # make sure they are numeric
 data_input$Month <- as.numeric(data_input$Month)
 data_input$Day <- as.numeric(data_input$Day)
 data_input$Temp <- as.numeric(data_input$Temp)
-
+data_input$Time <- as.POSIXct(data_input$Time,format="%H:%M:%S") # this converts the time out of being a factor but adds a day that doesn't make sense
 # sort by year, month, day, time
 data_input <- data_input[
   order( data_input[,2], data_input[,3], data_input[,4], data_input[,5]),
@@ -157,69 +149,23 @@ CU_FU1 <- CU_FU1 %>%
 
 CUFUcalculations <- as.data.frame(CU_FU1)
 
-CUFUcalculations
-}
-
-# Variables used
+# select for variables you will use in your model: 
+#YYYYMMDD
 #(Temp_max.lag1)
 #(CU_1119) 
 #(FU_acc_log)
 #(FU_state)
 
-# load in the fitted Model10, Model50, Model90
+CUFUcalculations <- CUFUcalculations %>% select(c("YYYYMMDD", 
+                                                  "Temp_max.lag1", 
+                                                  "CU_1119", 
+                                                  "FU_acc", 
+                                                  "FU_acc_log", 
+                                                  "FU_state"))
 
-# Predict LT10 using Model10
+# remove first row to deal with lag NA             
+CUFUcalculations <- CUFUcalculations[-1,]
 
-LT10 <- function(Temp_max.lag1=NULL, CU_1119=NULL, FU_acc_log=NULL, FU_state=NULL){
-  # load model data
-  load('/Users/Elizabeth/Desktop/Directed_Studies/shinyapp/cherrycoldhardiness/R/Models.RData')
-  
-  # predict the LT10 values based on file upload (inputID labeled 'csv_input')
-  PredictLT10 <- (predict(Model10, newdata = data.frame(calculate_CU_FU()), se= TRUE)) # this calculate_CU_FU() is what occurs in the app
-  
-  # Calculate confidence intervals and create data frames out of them
-  LT10.CIUpper <- (PredictLT10$Model10 + PredictLT10$se.fit*1.96)
-  LT10.CILower <- (PredictLT10$Model10 - PredictLT10$se.fit*1.96)
-  
-  # Create one data frame out of the predictions and CIs
-  PredictLT10 <- cbind(LT10.CIUpper, LT10.CILower, PredictLT10)
-  PredictLT10 <- as.data.frame(PredictLT10)
-  PredictLT10
-}
+CUFUcalculations
 
-
-# Predict LT50 using Model50
-
-LT50 <- function(Temp_max.lag1=NULL, CU_1119=NULL, FU_acc_log=NULL, FU_state=NULL){
-  # load model data
-  load('/Users/Elizabeth/Desktop/Directed_Studies/shinyapp/cherrycoldhardiness/R/Models.RData')
-  # predict the LT50 values based on file upload (inputID labeled 'csv_input')
-  PredictLT50 <- (predict(Model50, newdata = data.frame(calculate_CU_FU), se= TRUE))
-  
-  # Calculate confidence intervals and create data frames out of them
-  LT50.CIUpper <- (PredictLT50$Model50 + PredictLT50$se.fit*1.96)
-  LT50.CILower <- (PredictLT50$Model50 - PredictLT50$se.fit*1.96)
-  
-  # Create one data frame out of the predictions and CIs
-  PredictLT50 <- cbind(LT50.CIUpper, LT50.CILower, PredictLT50)
-  PredictLT50 <- as.data.frame(PredictLT50)
-  PredictLT50
-}
-
-# Predict LT10 using Model10
-
-LT90 <- function(Temp_max.lag1=NULL, CU_1119=NULL, FU_acc_log=NULL, FU_state=NULL){
-  # load model data
-  load('/Users/Elizabeth/Desktop/Directed_Studies/shinyapp/cherrycoldhardiness/R/Models.RData')
-  # predict the LT90 values based on file upload (inputID labeled 'csv_input')
-  PredictLT90 <- (predict(Model90, newdata = data.frame(calculate_CU_FU), se= TRUE))
-  
-  # Calculate confidence intervals and create data frames out of them
-  LT90.CIUpper <- (PredictLT90$Model90 + PredictLT90$se.fit*1.96)
-  LT90.CILower <- (PredictLT90$Model90 - PredictLT90$se.fit*1.96)
-  
-  # Create one data frame out of the predictions and CIs
-  PredictLT90 <- cbind(LT90.CIUpper, LT90.CILower, PredictLT90)
-  PredictLT90 <- as.data.frame(PredictLT90)
-  PredictLT90
 }
