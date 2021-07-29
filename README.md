@@ -39,7 +39,8 @@ if (length(install) > 0) {
 # install cherrycoldhardiness from the github repository
 devtools::install_github(repo = "ElizabethHoughton/cherrycoldhardiness")
 
-
+# Call the application
+library(cherrycoldhardiness)
 # Run the application
 cherrycoldhardiness()
 ```
