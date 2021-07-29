@@ -8,8 +8,6 @@ CH_LT50(Calculated_CU_FU = NULL)
 }
 \arguments{
 \item{Calculated_CU_FU}{a dataframe of calculated parameters}
-
-\item{Model50}{model for calculating 50 percent lethal temperatures}
 }
 \value{
 the calculated 50 percent lethal temperatures

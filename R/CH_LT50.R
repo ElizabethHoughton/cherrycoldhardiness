@@ -6,7 +6,6 @@
 #' Calculates the 50 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 #' 
 #' @param Calculated_CU_FU a dataframe of calculated parameters
-#' @param Model50 model for calculating 50 percent lethal temperatures
 #' 
 #' @return the calculated 50 percent lethal temperatures
 #' 

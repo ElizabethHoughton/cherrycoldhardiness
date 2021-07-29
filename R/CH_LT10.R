@@ -6,12 +6,11 @@
 #' Calculates the 10 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 #' 
 #' @param Calculated_CU_FU a dataframe of calculated parameters
-#' @param Model10 model for calculating 10 percent lethal temperatures
 #' 
 #' @return the calculated 10 percent lethal temperatures
 #' 
 #' @import dplyr
-#'
+#' 
 #' @export
 CH_LT10 <- function(Calculated_CU_FU=NULL){
   # load in the fitted Model10, Model50, Model90
@@ -31,4 +30,3 @@ CH_LT10 <- function(Calculated_CU_FU=NULL){
     dplyr::rename(LT10_standard_error = "se.fit")
   PredictLT10
 }
-

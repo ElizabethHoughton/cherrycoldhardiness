@@ -1,12 +1,14 @@
 #' Calculate 90 percent lethal temperatures
 #' 
 #' Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
+#' Calculate 90 percent lethal temperatures
+#' 
+#' Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
 #' 
 #' @details
 #' Calculates the 90 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 #' 
 #' @param Calculated_CU_FU a dataframe of calculated parameters
-#' @param Model90 model for calculating 90 percent lethal temperatures
 #' 
 #' @return the calculated 90 percent lethal temperatures
 #' 
