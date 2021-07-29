@@ -5,23 +5,23 @@
 #' @details 
 #' Calculates the 10 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 #' 
-#' @param Calculated_CU_FU a dataframe of calculated parameters
+#' @param Calculated_CU_FU10 a dataframe of calculated parameters
 #' 
 #' @return the calculated 10 percent lethal temperatures
 #' 
 #' @import dplyr
 #' 
 #' @export
-CH_LT10 <- function(Calculated_CU_FU=NULL){
+CH_LT10 <- function(Calculated_CU_FU10=NULL){
   # load in the fitted Model10, Model50, Model90
-  load("data/Model10.RData") # vs. readRDS("data/Model10.rds") which doesnt seem to be recognized
+  load("data/Models.RData") # vs. readRDS("data/Model10.rds") which doesnt seem to be recognized
   # predict the LT50 values based on file upload (inputID labeled 'csv_input')
-  PredictLT10 <- as.data.frame(stats::predict(Model10, newdata = Calculated_CU_FU, se= TRUE))
+  PredictLT10 <- as.data.frame(stats::predict(Model10, newdata = Calculated_CU_FU10, se= TRUE))
   # Calculate confidence intervals and create data frames out of them
   PredictLT10$LT10.CIUpper <- (PredictLT10$fit + PredictLT10$se.fit*1.96)
   PredictLT10$LT10.CILower <- (PredictLT10$fit - PredictLT10$se.fit*1.96)
-  # add the YYYYMMDD column from Calculated_CU_FU
-  PredictLT10$YYYYMMDD <- Calculated_CU_FU$YYYYMMDD
+  # add the YYYYMMDD column from Calculated_CU_FU10
+  PredictLT10$YYYYMMDD <- Calculated_CU_FU10$YYYYMMDD
   # rename fit to LT50
   PredictLT10 <- PredictLT10 %>% 
     dplyr::rename(LT10 = "fit")

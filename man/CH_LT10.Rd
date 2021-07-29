@@ -4,10 +4,10 @@
 \alias{CH_LT10}
 \title{Calculate 10 percent lethal temperatures}
 \usage{
-CH_LT10(Calculated_CU_FU = NULL)
+CH_LT10(Calculated_CU_FU10 = NULL)
 }
 \arguments{
-\item{Calculated_CU_FU}{a dataframe of calculated parameters}
+\item{Calculated_CU_FU10}{a dataframe of calculated parameters}
 }
 \value{
 the calculated 10 percent lethal temperatures
