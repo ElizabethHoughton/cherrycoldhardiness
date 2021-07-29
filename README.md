@@ -17,7 +17,7 @@ Or locally, via an R installation. To install and run the app run the following 
 avail <- installed.packages()[, 1]
 
 # Make a list of the required packages
-needed <- c(shiny,
+needed <- c("shiny",
     "shinydashboard",
     "shinythemes",
     "ggplot2",
