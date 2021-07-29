@@ -18,17 +18,17 @@ avail <- installed.packages()[, 1]
 
 # Make a list of the required packages
 needed <- c(shiny,
-    "shinydashboard"",
-    "shinythemes"",
-    "ggplot2"",
-    "dplyr"",
-    "png"",
-    "data.table"",
-    "zoo"",
-    "stats"",
-    "nlme"",
-    "car"",
-    "lubridate""
+    "shinydashboard",
+    "shinythemes",
+    "ggplot2",
+    "dplyr",
+    "png",
+    "data.table",
+    "zoo",
+    "stats",
+    "nlme",
+    "car",
+    "lubridate"
 )
 # This list will eventually be shortened
 
