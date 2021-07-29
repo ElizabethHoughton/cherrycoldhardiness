@@ -1,8 +1,3 @@
----
-title: "README""
-author: "Elizabeth Houghton"
-output: html_document
----
 ## cherrycoldhardiness
 
 A shiny app for estimating the 10, 50, and 90% lethal temperatures (LT10, LT50, LT90) of the sweet cherry variety 'Sweetheart' in the Okanagan Valley of British Columbia, Canada.
