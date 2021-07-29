@@ -16,7 +16,10 @@ the calculated 90 percent lethal temperatures
 }
 \description{
 Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
+Calculate 90 percent lethal temperatures
 }
 \details{
+Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
+
 Calculates the 90 percent lethal temperatures for Sweetheart sweet cherries in the Okanagan Valley based on daily air temperatures.
 }

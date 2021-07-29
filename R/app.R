@@ -7,7 +7,7 @@
 #' 
 #' @return web application, data frame of lethal temperatures
 #' 
-#' @import shiny shinydashboard shinythemes ggplot2 png utils
+#' @import shiny shinydashboard shinythemes ggplot2 png utils car
 #' 
 #' @export
 cherrycoldhardiness <- function() {
