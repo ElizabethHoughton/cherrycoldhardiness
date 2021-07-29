@@ -10,7 +10,7 @@
 #' @import shiny shinydashboard shinythemes ggplot2 png utils
 #' 
 #' @export
-cherrycoldhardiness <- function() {
+#cherrycoldhardiness <- function() {
 
 # the user interface
 ui <- fluidPage(theme = shinytheme("flatly"),
@@ -217,7 +217,7 @@ server <- function(input, output, session) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
-}
+#}
 
 # NOTES
 

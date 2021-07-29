@@ -31,6 +31,3 @@ CH_LT50 <- function(Calculated_CU_FU=NULL){
     dplyr::rename(LT50_standard_error = "se.fit")
   PredictLT50
 }
-
-Calculated_CU_FU <- read.csv(file='/Users/Elizabeth/Desktop/TestData/TestData_CU_FU.csv')
-CH_LT50(Calculated_CU_FU)

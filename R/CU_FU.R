@@ -56,6 +56,9 @@ data_input <- stats::na.omit(data_input)
 
 #select from the min CU_acc value to the final data row
 
+### YOU N EED TO FIX THIS WHICH.MIN STATEMENT TO ALLOW YOU TO UPLOAD DATA PART WAY THROUGH THE SEASON,
+### OR WHEN THE CU MAY NOT BE ACCUMULATING QUITE YET
+
 data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
 
 # Calculate the CU accumulation (CU_acc_final) from just these remaining chill units
