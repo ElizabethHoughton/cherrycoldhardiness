@@ -14,7 +14,7 @@
 #' @export
 CH_LT50 <- function(Calculated_CU_FU50=NULL){
   # load in the fitted Model10, Model50, Model90
-  load("data/Models.RData") # vs. readRDS("data/Model50.rds") which doesnt seem to be recognized
+  load("data/Model50.RData") # vs. readRDS("data/Model50.rds") which doesnt seem to be recognized
   # predict the LT50 values based on file upload (inputID labeled 'csv_input')
   PredictLT50 <- as.data.frame(stats::predict(Model50, newdata = Calculated_CU_FU50, se= TRUE))
   # Calculate confidence intervals and create data frames out of them
