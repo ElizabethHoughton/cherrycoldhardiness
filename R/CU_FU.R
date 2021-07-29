@@ -10,8 +10,6 @@
 #' @return the calculated 90 percent lethal temperatures
 #' 
 #' @import dplyr
-#' 
-#' @export
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   # select columns of interest

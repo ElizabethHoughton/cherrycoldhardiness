@@ -11,8 +11,6 @@
 #' @return the calculated 10 percent lethal temperatures
 #' 
 #' @import dplyr
-#' 
-#' @export
 CH_LT10 <- function(Calculated_CU_FU=NULL){
   # load in the fitted Model10, Model50, Model90
   load("data/Model10.RData") # vs. readRDS("data/Model10.rds") which doesnt seem to be recognized
