@@ -22,6 +22,7 @@ Imports:
     stats,
     nlme,
     car,
-    lubridate
+    lubridate,
+    AICcmodavg
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1

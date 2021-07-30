@@ -9,14 +9,14 @@
 #' 
 #' @return the calculated 50 percent lethal temperatures
 #' 
-#' @import dplyr
+#' @import dplyr AICcmodavg
 #' 
 #' @export
 CH_LT50 <- function(Calculated_CU_FU50=NULL){
   # load in the fitted Model10, Model50, Model90
   load("data/Model50.RData") # vs. readRDS("data/Model50.rds") which doesnt seem to be recognized
   # predict the LT50 values based on file upload (inputID labeled 'csv_input')
-  PredictLT50 <- as.data.frame(stats::predict(Model50, newdata = Calculated_CU_FU50, se= TRUE))
+  PredictLT50 <- as.data.frame(AICcmodavg::predictSE.gls(Model50, newdata = Calculated_CU_FU50, se= TRUE))
   # Calculate confidence intervals and create data frames out of them
   PredictLT50$LT50.CIUpper <- (PredictLT50$fit + PredictLT50$se.fit*1.96)
   PredictLT50$LT50.CILower <- (PredictLT50$fit - PredictLT50$se.fit*1.96)

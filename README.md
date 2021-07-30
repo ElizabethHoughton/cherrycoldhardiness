@@ -20,10 +20,11 @@ needed <- c("shiny",
     "png",
     "data.table",
     "zoo",
-    "stats",
     "nlme",
     "car",
-    "lubridate"
+    "lubridate",
+    "stats",
+    "AICcmodavg"
 )
 # This list will eventually be shortened
 

@@ -130,7 +130,7 @@ cherrycoldhardiness <- function() {
   server <- function(input, output, session) {
     # data input as a data.table called "data_input" (data.table is similar in function to data.frame, this is reactive
     # so you must call on it like it is a function from here on as "data_input()", will update with each new upload)
-     data_input <- reactive({
+    data_input <- reactive({
       infile <- input$csv_input
       if (is.null(infile)) {
         # User has not uploaded a file yet
@@ -149,8 +149,8 @@ cherrycoldhardiness <- function() {
     # will need to add 'data.table' package if you use this approach
     
     # create a data frame out of data_input() with calculated CU and FU using CU_FU function
-     # you need 3 seperate Calculated_CU_FU variables so that the same variable is not being called on in each 
-     # CH_LT10, CH_LT50, CH_LT90 as this causes errors when trying to download the app somewhere else
+    # you need 3 seperate Calculated_CU_FU variables so that the same variable is not being called on in each 
+    # CH_LT10, CH_LT50, CH_LT90 as this causes errors when trying to download the app somewhere else
     Calculated_CU_FU10 <- reactive({
       CUFU <- CU_FU(data_input())
       CUFU
