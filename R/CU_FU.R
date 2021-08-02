@@ -23,12 +23,11 @@ CU_FU <- function(data_input=NULL) {
   data_input$Month <- as.numeric(data_input$Month)
   data_input$Day <- as.numeric(data_input$Day)
   data_input$Temp <- as.numeric(data_input$Temp)
-  data_input$Time <- as.POSIXct(data_input$Time,format="%H:%M:%S") # this converts the time out of being a factor but adds a day that doesn't make sense
+  data_input$Time <- as.POSIXct(data_input$Time,format="%H:%M") # this converts the time out of being a factor but adds a day that doesn't make sense
   # sort by year, month, day, time
   data_input <- data_input[
     order( data_input[,2], data_input[,3], data_input[,4], data_input[,5]),
   ]
-  
   # replace any NA values with the average of the above and below temp values (if needed)
   data_input$Temp <- (zoo::na.approx(data_input$Temp, rule = 2))
   
@@ -45,40 +44,55 @@ CU_FU <- function(data_input=NULL) {
   # Make a new column (CU_acc) that is the accumulation of all the calculated CU from each day prior and the current day
   
   data_input <- data.frame(data_input, CU_acc=cumsum(data_input$CU))
-  
+
   #remove the first NA value with na.omit
   data_input <- stats::na.omit(data_input)
   
   # Anything after the minimum CU_acc, assign the accumulative CU, everything before assign 0
   # which.min outputs the row that the minimum value exists in
   
-  #select from the min CU_acc value to the final data row
+  # if the length of the data frame when selecting for values after the minimum CU_acc value is 
+  # greater than 0, assign CU_acc_final to be the cumulative sum of CU, if it is shorter than 1,
+  # assign CU_acc_final a value of zero
   
-  data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
+  if (nrow(data_input[which.min(data_input$CU_acc):nrow(data_input), ]) > 1){
+    data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
+    data_input_2 <-  data.frame(data_input_2, CU_acc_final=cumsum(data_input_2$CU))
+    data_input <- merge(data_input, data_input_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc"), all = TRUE)
+  } else {
+  data_input <- data_input %>% dplyr::mutate(CU_acc_final = 0)
+  }
+
+  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/July_to_Aug.csv')
+  ############################
+  #OLD CODE TO DO THE IF ELSE STATEMENT, does not work with periods of data that to no reach CU_acc min
+    # data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
   
   # Calculate the CU accumulation (CU_acc_final) from just these remaining chill units
-  data_input_2 <- data.frame(data_input_2, CU_acc_final=cumsum(data_input_2$CU))
+  # data_input_2 <- data.frame(data_input_2, CU_acc_final=cumsum(data_input_2$CU))
   
   # add data_input_2$CU_acc_final to your data_input so that you do not lose temp data from days previous
   
-  data_input_final <- merge(data_input, data_input_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc"), all = TRUE)
+  # data_input_final <- merge(data_input, data_input_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc"), all = TRUE)
+  
+  ############################
   
   # Replace NA values with 0
-  data_input_final[is.na(data_input_final)] <- 0
+  data_input[is.na(data_input)] <- 0
   
   # If CU_acc_final below 1119, assign acquiring, if CU_acc_final above 1119, assign complete
-  data_input_final <- data_input_final %>% dplyr::mutate(CU_state = case_when(CU_acc_final < 1119 ~ 'acquiring', 
+  data_input <- data_input %>% dplyr::mutate(CU_state = case_when(CU_acc_final < 1119 ~ 'acquiring', 
                                                                               CU_acc_final >= 1119 ~ 'complete'))
   
   # For the model, have a column that is 0-1119 (Call it CU_1119)
-  data_input_final <- data_input_final %>% dplyr::mutate(CU_1119 = case_when(CU_acc_final < 1119 ~ CU_acc_final, 
+  data_input <- data_input %>% dplyr::mutate(CU_1119 = case_when(CU_acc_final < 1119 ~ CU_acc_final, 
                                                                              CU_acc_final >= 1119 ~ 1119))
   
   # FU Calculations
   # FU will begin accumulation after 1119 CU have been accumulated
   # Subset data that has complete the chilling requirements
   
-  data_input_FU <- data_input_final %>% dplyr::filter(CU_state=="complete")
+  data_input_FU <- data_input %>% dplyr::filter(CU_state=="complete")
   
   # calculate the FU for these times
   # From Neilsen et al. 2015
@@ -92,7 +106,7 @@ CU_FU <- function(data_input=NULL) {
   
   # add FU to CU data frame
   
-  data_input_final <- merge(data_input_final, data_input_FU, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc", "CU_acc_final", "CU_state", "CU_1119"), all = TRUE)
+  data_input_final <- merge(data_input, data_input_FU, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc", "CU_acc_final", "CU_state", "CU_1119"), all = TRUE)
   
   # Replace NA values with 0
   data_input_final[is.na(data_input_final)] <- 0
