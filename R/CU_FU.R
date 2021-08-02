@@ -34,8 +34,6 @@ CU_FU <- function(data_input=NULL) {
   
   data_input_max <- data_input #save to calculate daily max and lag temps
   
-  # FOR NOW ASSUME THEY ARE UPLOADING DATA STARTING JULY-MAY OF THE YEAR OF INTEREST
-  
   # Calculate CU
   
   data_input <- data_input %>% dplyr::mutate(CU = case_when(Temp < -2 ~ 0, 
