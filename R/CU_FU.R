@@ -63,7 +63,7 @@ CU_FU <- function(data_input=NULL) {
   data_input <- data_input %>% dplyr::mutate(CU_acc_final = 0)
   }
 
-  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/July_to_Aug.csv')
+  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/TestData.csv')
   ############################
   #OLD CODE TO DO THE IF ELSE STATEMENT, does not work with periods of data that to no reach CU_acc min
     # data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
@@ -182,4 +182,11 @@ CU_FU <- function(data_input=NULL) {
   
   CUFUcalculations
   
+  # if there is an issue with missing data, this will fill the NA value with the value from the row previous
+  
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(Temp_max.lag1, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(CU_1119, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc_log, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_state, .direction= c("up"))
 }
