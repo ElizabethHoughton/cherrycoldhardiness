@@ -37,7 +37,8 @@ cherrycoldhardiness <- function() {
                              tabPanel("How to Use",
                                       mainPanel(
                                         h3("Instructions"), # size and text for paragraph
-                                        p("To use this model, hourly temperature data is required..."),
+                                        p("To use this model, hourly temperature data is required... If using the data provided by this site, this app will only
+                                          function from September to April of each year"),
                                         br(), #line break
                                         h3("Don't have your own data?"),
                                         p("This will only be here with instuctions to Gov. Canada Historic climate 
@@ -50,6 +51,12 @@ cherrycoldhardiness <- function() {
                                  sidebarPanel(
                                    title = "Inputs",
                                    fileInput("csv_input", "Select CSV File to Import", accept = ".csv", multiple = TRUE),
+                                   selectInput("location", "Or Select Closest Location", choices = c("Not Selected"= "not_sel",
+                                                                                   "Penticton"="penticton",
+                                                                                   "Summerland"="summerland",
+                                                                                   "Kelowna"="kelowna",
+                                                                                   "Vernon"="vernon"
+                                                                                   )),
                                    actionButton("run_button", 
                                                 "Run Analysis",
                                                 style="margin-top: 12%"),
@@ -87,13 +94,15 @@ cherrycoldhardiness <- function() {
         pch= NA,
         xlab="Date", 
         ylab="LT10 (C)",
-        cex.lab=1, ylim=c(-30, 0))
-    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
-    legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
+        xlim=c((as.Date(min(Calculated_LT10$YYYYMMDD))+30), as.Date(max(Calculated_LT10$YYYYMMDD))),
+        cex.lab=1, ylim=c(-25, 0))
+    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, lty = 1, lwd=1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CILower, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
+    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
   }
-  
   
   # plot LT50
   
@@ -103,11 +112,14 @@ cherrycoldhardiness <- function() {
         pch= NA,
         xlab="Date", 
         ylab="LT50 (C)",
-        cex.lab=1, ylim=c(-30, 0))
-    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
-    legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
+        xlim=c((as.Date(min(Calculated_LT50$YYYYMMDD50))+30), as.Date(max(Calculated_LT50$YYYYMMDD50))),
+        cex.lab=1, ylim=c(-25, 0))
+    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, lty = 1, lwd=1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CILower, lty = 2, col="grey40")#WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
+    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
   }
   
   # plot LT90
@@ -118,12 +130,55 @@ cherrycoldhardiness <- function() {
         pch=NA,
         xlab="Date", 
         ylab="LT90 (C)",
-        cex.lab=1, ylim=c(-30, 0))
-    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, lty = 1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
-    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CIUpper, lty = 2) #WHATEVER YOUR CIs ARE LABELLED
-    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CILower, lty = 2)#WHATEVER YOUR CIs ARE LABELLED
-    legend("bottomright", legend=c("Estimated Values", "95% Confidence Intervals"), col=c("black", "black"), lty=1:2, cex=0.8) # add legend
+        xlim=c((as.Date(min(Calculated_LT90$YYYYMMDD90))+30), as.Date(max(Calculated_LT90$YYYYMMDD90))),
+        cex.lab=1, ylim=c(-25, 0))
+    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, lty = 1, lwd=1) #WHATEVER YOUR PREDICTIONS ARE LABELLED
+    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CILower, lty = 2, col="grey40")#WHATEVER YOUR CIs ARE LABELLED
+    lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
+    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
   }
+  
+  # The current year and last year
+  
+  # LETS CHANGE THIS TO SEE IF IT WORKS IF I PRETEND IT IS JANUARY 2021 ###
+  current_year <- as.numeric(2021)
+  last_year <- as.numeric(2020)
+  current_month <- as.numeric(1)
+  today_date <- as.POSIXct("2021-01-15 01:00:00", format="%Y-%m-%d %H:%M:%S")
+  
+  
+  ########## REPLACE WITH THESE VALUES TO MAKE THE APP AUTOMATICALLY CALCULATE BASED ON TODAYS DATE####
+  #current_year <- as.integer(format(Sys.Date(), "%Y"))
+  #last_year <- as.integer(format(Sys.Date(), "%Y")) - 1
+  #current_month <- as.integer(Sys.Date(), "%M")
+  #today_date <- format(Sys.Date(), format = "%Y-%m-%d")
+  ###########
+  
+  # to create a date function
+  #create a year-month-day data frame that makes it aug of this or last year
+  Year <- c(last_year)
+  Year2 <- c(current_year)
+  Month<- 8
+  Day <- 1
+
+  
+  TDAY <- c(today_date)
+  select_date1 <- data.frame(Year, Year2, Month, Day)
+  FROM <- (ISOdatetime(select_date1$Year, select_date1$Month, select_date1$Day, hour=1, min=0, sec=0))
+  FROM2 <- (ISOdatetime(select_date1$Year2, select_date1$Month, select_date1$Day, hour=1, min=0, sec=0))
+  select_date1$FROM <- FROM
+  select_date1$TDAY <-TDAY
+  
+  # for selecting dates from the year prior to this year
+  select_date1$TDAY <- as.POSIXct(select_date1$TDAY, format="%Y-%m-%d %H:%M:%S")
+  select_date1$FROM <- as.POSIXct(select_date1$FROM, format="%Y-%m-%d %H:%M:%S")
+  
+  # for selecting dates in the same year
+  select_date2 <- select_date1
+  select_date2$FROM <- FROM2
+
   
   # Define server logic required
   # I think adding 'session' into the function allows you to access the functions created in your other .R files?
@@ -131,14 +186,125 @@ cherrycoldhardiness <- function() {
     # data input as a data.table called "data_input" (data.table is similar in function to data.frame, this is reactive
     # so you must call on it like it is a function from here on as "data_input()", will update with each new upload)
     data_input <- reactive({
+      if(!is.null(input$csv_input) & input$location == "not_sel"){ # if a .csv file is uploaded (not null) that is your data input
       infile <- input$csv_input
-      if (is.null(infile)) {
-        # User has not uploaded a file yet
+      read.csv(infile$datapath)
+      #if summerland is selected from the drop down menu
+      } else if (input$location == "summerland"){ 
+        # if the current date is in the winter-spring (before June)
+        if(current_month < 6){                    
+        summerland_station <- data.frame(StationID = c(979),
+                                         start = rep(last_year, 1),
+                                         end = rep(current_year, 1))
+        met <- getData(summerland_station, folder = "./data/summerland", verbose = FALSE)
+        summerland_data <- dplyr::bind_rows(met)
+        # select data from august the year prior to today's date
+        summerland_data <- summerland_data %>% dplyr::filter(summerland_data[,6] >= select_date1$FROM & 
+                                                        summerland_data[,6] <= select_date1$TDAY)
+        # remove the first column
+        infile = summerland_data[,-1]
+      }else{
+        # if the current date is in the spring-winter (after June)
+        summerland_station <- data.frame(StationID = c(979),
+                                         start = rep(current_year, 1),
+                                         end = rep(current_year, 1))
+        met <- getData(summerland_station, folder = "./data/summerland", verbose = FALSE)
+        summerland_data <- dplyr::bind_rows(met)
+        # select data from august this year to today's date
+        summerland_data <- summerland_data %>% dplyr::filter(summerland_data[,6] >= select_date2$FROM & 
+                                                        summerland_data[,6] <= select_date2$TDAY)
+        # remove the first column
+        infile <- summerland_data[,-1]
+      }
+      # if penticton is selected from the drop down menu    
+      }else if (input$location == "penticton"){ 
+        # if the current date is in the winter-spring (before June)
+        if(current_month < 6){                    
+          penticton_station <- data.frame(StationID = c(50269),
+                                           start = rep(last_year, 1),
+                                           end = rep(current_year, 1))
+          met <- getData(penticton_station, folder = "./data/penticton", verbose = FALSE)
+          penticton_data <- dplyr::bind_rows(met)
+          # select data from august the year prior to today's date
+          penticton_data <- penticton_data %>% dplyr::filter(penticton_data[,6] >= select_date1$FROM & 
+                                                          penticton_data[,6] <= select_date1$TDAY)
+          # remove the first column
+          infile = penticton_data[,-1]
+        }else{
+          # if the current date is in the spring-winter (after June)
+          penticton_station <- data.frame(StationID = c(50269),
+                                           start = rep(current_year, 1),
+                                           end = rep(current_year, 1))
+          met <- getData(penticton_station, folder = "./data/penticton", verbose = FALSE)
+          summerland_data <- dplyr::bind_rows(met)
+          # select data from august this year to today's date
+          penticton_data <- penticton_data %>% dplyr::filter(penticton_data[,6] >= select_date2$FROM & 
+                                                          penticton_data[,6] <= select_date2$TDAY)
+          # remove the first column
+          infile <- penticton_data[,-1]
+        }
+        # if kelowna is selected from the drop down menu  
+      }else if (input$location == "kelowna"){ 
+        # if the current date is in the winter-spring (before June)
+        if(current_month < 6){                    
+          kelowna_station <- data.frame(StationID = c(51117),
+                                          start = rep(last_year, 1),
+                                          end = rep(current_year, 1))
+          met <- getData(kelowna_station, folder = "./data/kelowna", verbose = FALSE)
+          kelowna_data <- dplyr::bind_rows(met)
+          # select data from august the year prior to today's date
+          kelowna_data <- kelowna_data %>% dplyr::filter(kelowna_data[,6] >= select_date1$FROM & 
+                                                          kelowna_data[,6] <= select_date1$TDAY)
+          # remove the first column
+          infile = kelowna_data[,-1]
+        }else{
+          # if the current date is in the spring-winter (after June)
+          kelowna_station <- data.frame(StationID = c(51117),
+                                          start = rep(current_year, 1),
+                                          end = rep(current_year, 1))
+          met <- getData(kelowna_station, folder = "./data/kelowna", verbose = FALSE)
+          kelowna_data <- dplyr::bind_rows(met)
+          # select data from august this year to today's date
+          kelowna_data <- kelowna_data %>% dplyr::filter(kelowna_data[,6] >= select_date2$FROM & 
+                                                          kelowna_data[,6] <= select_date2$TDAY)
+          # remove the first column
+          infile <- kelowna_data[,-1]
+        }
+        
+      }else if (input$location == "vernon"){ 
+        # if the current date is in the winter-spring (before June)
+        if(current_month < 6){                    
+          vernon_station <- data.frame(StationID = c(46987),
+                                          start = rep(last_year, 1),
+                                          end = rep(current_year, 1))
+          met <- getData(vernon_station, folder = "./data/vernon", verbose = FALSE)
+          vernon_data <- dplyr::bind_rows(met)
+          # select data from august the year prior to today's date
+          vernon_data <- vernon_data %>% dplyr::filter(vernon_data[,6] >= select_date1$FROM & 
+                                                          vernon_data[,6] <= select_date1$TDAY)
+          # remove the first column
+          infile = vernon_data[,-1]
+        }else{
+          # if the current date is in the spring-winter (after June)
+          vernon_station <- data.frame(StationID = c(46987),
+                                          start = rep(current_year, 1),
+                                          end = rep(current_year, 1))
+          met <- getData(vernon_station, folder = "./data/vernon", verbose = FALSE)
+          vernon_data <- dplyr::bind_rows(met)
+          # select data from august this year to today's date
+          vernon_data <- vernon_data %>% dplyr::filter(vernon_data[,6] >= select_date2$FROM & 
+                                                          vernon_data[,6] <= select_date2$TDAY)
+          # remove the first column
+          infile <- vernon_data[,-1]
+        }
+        #if nothing is selected or uploaded (so site doesn't immediately crash)
+      } else if (is.null(infile)) {
         return(NULL)
       }
-      read.csv(infile$datapath)
-    })
-    
+      
+  
+      })
+
     # alternate approach
     #req(input$csv_input)
     # gives error code if not a .csv file
@@ -223,8 +389,8 @@ cherrycoldhardiness <- function() {
         write.csv(All_LTs(), file, row.names = FALSE)
       }
     )
-  }
   
+  }
   # Run the application 
   shinyApp(ui = ui, server = server)
   

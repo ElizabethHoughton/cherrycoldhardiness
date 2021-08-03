@@ -22,6 +22,8 @@ CH_LT10 <- function(Calculated_CU_FU10=NULL){
   PredictLT10$LT10.CILower <- (PredictLT10$fit - PredictLT10$se.fit*1.96)
   # add the YYYYMMDD column from Calculated_CU_FU10
   PredictLT10$YYYYMMDD <- Calculated_CU_FU10$YYYYMMDD
+  # add the Temp_min column from Calculated_CU_FU10
+  PredictLT10$Temp_min <- Calculated_CU_FU10$Temp_min
   # rename fit to LT50
   PredictLT10 <- PredictLT10 %>% 
     dplyr::rename(LT10 = "fit")

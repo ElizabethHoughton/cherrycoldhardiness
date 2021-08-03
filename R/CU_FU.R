@@ -63,7 +63,7 @@ CU_FU <- function(data_input=NULL) {
   data_input <- data_input %>% dplyr::mutate(CU_acc_final = 0)
   }
 
-  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/July_to_Aug.csv')
+  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/TestData.csv')
   ############################
   #OLD CODE TO DO THE IF ELSE STATEMENT, does not work with periods of data that to no reach CU_acc min
     # data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
@@ -133,15 +133,24 @@ CU_FU <- function(data_input=NULL) {
   # Aggregate by Year, Month, Day
   # Max temp
   data_input_dailymax <- stats::aggregate(Temp ~ Year + Month + Day, data_input_max, max)
+  # Min temp
+  data_input_dailymin <- stats::aggregate(Temp ~ Year + Month + Day, data_input_max, min)
   
-  # rename Temp to Temp_max
+  # rename Temp to Temp_max and Temp to Temp_min
   data_input_dailymax <- data_input_dailymax %>% 
     dplyr::rename(Temp_max = Temp)
+  
+  data_input_dailymin <- data_input_dailymin %>% 
+    dplyr::rename(Temp_min = Temp)
+  
+  # merge max and min by Year, Month, Day
+  data_input_dailymax <- merge(data_input_dailymax, data_input_dailymin, by = c("Year", "Month", "Day"), all = TRUE)
   
   # sort by year, month, day
   data_input_dailymax <- data_input_dailymax[
     order(data_input_dailymax[,1], data_input_dailymax[,2], data_input_dailymax[,3]),
   ]
+  
   
   # Assign 1st order temperature lags for max temp
   # For max temps
@@ -169,8 +178,10 @@ CU_FU <- function(data_input=NULL) {
   #(CU_1119) 
   #(FU_acc_log)
   #(FU_state)
+  #(Temp_min) for graphs
   
   CUFUcalculations <- CUFUcalculations %>% dplyr::select(c("YYYYMMDD", 
+                                                           "Temp_min",
                                                            "Temp_max.lag1", 
                                                            "CU_1119", 
                                                            "FU_acc", 
@@ -182,4 +193,11 @@ CU_FU <- function(data_input=NULL) {
   
   CUFUcalculations
   
+  # if there is an issue with missing data, this will fill the NA value with the value from the row previous
+  
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(Temp_max.lag1, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(CU_1119, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc_log, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_state, .direction= c("up"))
 }
