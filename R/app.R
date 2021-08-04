@@ -24,25 +24,46 @@ cherrycoldhardiness <- function() {
                                         h3("Modelling Approach for Sweet Cherry 
                                            Cold Hardiness Estimations in the Okanagan 
                                            Valley of British Columbia"), # size and text for paragraph
-                                        p("This model can be used to estimate the the cold hardiness of 
-                                          the sweet cherry cultivar Sweetheart grafted on Mazzard 
-                                          rootstock within the Okanagan Valley of 
-                                          British Columbia."),
+                                        p("The cold hardiness of perennial plants refers to their ability to 
+                                          tolerate freezing temperatures. This model has been developed to help 
+                                          estimate cold hardiness by determining the temperatures that cause cold damage to the flower buds of the 
+                                          sweet cherry cultivar 'Sweetheart' grafted on Mazzard rootstock located within 
+                                          the Okanagan Valley of British Columbia."),
                                         br(),
-                                        p("Paragraph text"),
-                                        tags$img(height = 300, width = 400, src = "winterorchard.png"),
+                                        p("This model relies on hourly air temperature data and estimates the lethal temperatures that would result in
+                                        10%, 50%, and 90% damage to the cherry fruit buds. These estimates are made based on the maximum daily air 
+                                        temperatures from the day before and calculations of the daily chilling and heat requirement accumulation based on models developed by",
+                                        a(href ="https://www.researchgate.net/publication/282060426_Development_of_chilling_and_forcing_relationships_for_modeling_spring_phenology_of_apple_and_sweet_cherry", "Neilsen et al. (2015)"),
+                                        "."),
                                         br(),
-                                        a(href="https://github.com/ElizabethHoughton/cherry-cold-hardiness", "GitHub"))), #active weblink to GitHub)),
+                                        h3("Website Information"),
+                                        p("Questions and comments about this website can be sent to Elizabeth Houghton (elizabeth.houghton@ubc.ca).
+                                          The website source content can be viewed on",
+                                          a(href="https://github.com/ElizabethHoughton/cherry-cold-hardiness", "GitHub"), #active weblink to GitHub
+                                          "."))),
                              # second tab panel
                              tabPanel("How to Use",
                                       mainPanel(
-                                        h3("Instructions"), # size and text for paragraph
-                                        p("To use this model, hourly temperature data is required... If using the data provided by this site, this app will only
-                                          function from September to April of each year"),
+                                        h3("Data Requirements"), # size and text for paragraph
+                                        p("This model requires hourly air temperature data starting in September of the season you would like to estimate
+                                        lethal temperatures. If you are interested in using your own hourly temperature data, it must be uploaded as
+                                        a CSV file in the same format as the following template:"),
                                         br(), #line break
+                                        downloadButton("downloadTemplate", 
+                                                       "Download file template"),
                                         h3("Don't have your own data?"),
-                                        p("This will only be here with instuctions to Gov. Canada Historic climate 
-                                        data if I can't figure out how to link the data to the shiny app.")
+                                        p("That's okay! Choose one of four loactions currently available and hourly temperature data from the",
+                                          a(href="https://climate.weather.gc.ca/historical_data/search_historic_data_e.html", "Government of Canada's Historical Database"),
+                                        "will be used in the model. This option may take up to a few minutes to run. You can find the exact weather stations used at each location here:",
+                                          a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2007-11-30%7C2021-08-03&dlyRange=2005-01-01%7C2021-08-02&mlyRange=%7C&StationID=46987&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=2&searchMethod=contains&Month=8&Day=3&txtStationName=vernon&timeframe=1&Year=2021", "Vernon"),
+                                          ",",
+                                          a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-12-13%7C2021-08-03&dlyRange=2013-12-16%7C2021-08-02&mlyRange=%7C&StationID=51117&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=16&searchMethod=contains&Month=8&Day=3&txtStationName=kelowna&timeframe=1&Year=2021", "Kelowna"),
+                                          ",",
+                                          a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=1994-02-01%7C2021-08-03&dlyRange=1990-06-01%7C2021-08-02&mlyRange=1990-01-01%7C2006-11-01&StationID=979&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=3&searchMethod=contains&Month=8&Day=3&txtStationName=summerland&timeframe=1&Year=2021", "Summerland"),
+                                          ",",
+                                          a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-05-07%7C2021-08-03&dlyRange=2012-05-10%7C2021-08-02&mlyRange=%7C&StationID=50269&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=1&searchMethod=contains&Month=8&Day=3&txtStationName=penticton&timeframe=1&Year=2021", "Penticton"),
+                                          "."
+                                          )
                                       )),
                              # third tab panel
                              tabPanel(
@@ -63,7 +84,7 @@ cherrycoldhardiness <- function() {
                                    #Add a button for saving any calculated corrections as a .csv
                                    downloadButton("downloadData", 
                                                   "Save results",
-                                                  style= "margin-top: 12%") #not currently functional
+                                                  style= "margin-top: 12%")
                                  ),
                                  mainPanel(
                                    tabsetPanel(
@@ -100,8 +121,8 @@ cherrycoldhardiness <- function() {
     lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10.CILower, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
-    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
-           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
+    legend("bottomleft", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8, bty = "n") # add legend
   }
   
   # plot LT50
@@ -118,8 +139,8 @@ cherrycoldhardiness <- function() {
     lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50.CILower, lty = 2, col="grey40")#WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
-    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
-           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
+    legend("bottomleft", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8, bty = "n") # add legend
   }
   
   # plot LT90
@@ -136,8 +157,8 @@ cherrycoldhardiness <- function() {
     lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CIUpper, lty = 2, col="grey40") #WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90.CILower, lty = 2, col="grey40")#WHATEVER YOUR CIs ARE LABELLED
     lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$Temp_min, lty = 1, col= "blue", lwd=1) # daily minimum temp
-    legend("bottomright", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
-           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8) # add legend
+    legend("bottomleft", legend=c("Estimated Lethal Temp", "95% Confidence Intervals", "Daily Minimum Temp"), 
+           col=c("black", "grey40", "blue"), lty=c(1, 2, 1), lwd=c(2, 2, 2), cex=0.8, bty = "n") # add legend, bty removes box outline
   }
   
   # The current year and last year
@@ -387,6 +408,15 @@ cherrycoldhardiness <- function() {
       },
       content = function(file) {
         write.csv(All_LTs(), file, row.names = FALSE)
+      }
+    )
+    
+    output$downloadTemplate <- downloadHandler( #allow users to download a template of the data needed for uploads
+      filename <- function() {
+        "DataTemplate.csv"
+      },
+      content <- function(file) {
+        file.copy("./data/DataTemplate.csv", file)
       }
     )
   
