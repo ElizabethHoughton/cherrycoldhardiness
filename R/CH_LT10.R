@@ -30,5 +30,7 @@ CH_LT10 <- function(Calculated_CU_FU10=NULL){
   # rename se.fit to LT50_standard_error
   PredictLT10 <- PredictLT10 %>% 
     dplyr::rename(LT10_standard_error = "se.fit")
+  PredictLT10$Colour = "black"
+  PredictLT10$Colour[PredictLT10$YYYYMMDD >= as.Date(Sys.Date())] = "red"
   PredictLT10
 }

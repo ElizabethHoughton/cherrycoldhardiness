@@ -24,7 +24,10 @@ needed <- c("shiny",
     "car",
     "lubridate",
     "stats",
-    "AICcmodavg"
+    "AICcmodavg",
+    "owmr",
+    "jsonlite",
+    "tidyr"
 )
 # This list will eventually be shortened
 
@@ -40,8 +43,12 @@ if (length(install) > 0) {
 # install cherrycoldhardiness from the github repository
 devtools::install_github(repo = "ElizabethHoughton/cherrycoldhardiness")
 
+# update to the current version of cherrycoldhardiness
+install.packages("cherrycoldhardiness")
+
 # Call the application
 library(cherrycoldhardiness)
+
 # Run the application
 cherrycoldhardiness()
 ```

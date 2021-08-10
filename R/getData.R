@@ -50,16 +50,17 @@ if (isTRUE(verbose)) {
 }
 
 out <- vector(mode = "list", length = nfiles)
-hourlyNames <- c("Longitude (x)", "Latitude (y)", "Station Name", "Climate ID", "Date/Time (LST)", 
-                 "Year", "Month", "Day", "Time (LST)",
-                 "Temp (degC)", "Temp Flag", "Dew Point Temp (degC)",
-                 "Dew Point Temp Flag", "Rel Hum (%)", "Rel Hum Flag", "Precip. Amount (mm)", "Precip. Amount Flag", 
-                 "Wind Dir (10s deg)", "Wind Dir Flag", "Wind Spd (km/h)",
-                 "Wind Spd Flag", "Visibility (km)", "Visibility Flag",
-                 "Stn Press (kPa)", "Stn Press Flag", "Hmdx", "Hmdx Flag",
-                 "Wind Chill", "Wind Chill Flag", "Weather")
+# changed hourly names to omit spaces
+hourlyNames <- c("Longitude", "Latitude", "Station.Name", "ClimateID", "Date.Time.LST", 
+                 "Year", "Month", "Day", "Time.LST",
+                 "Temp.degC", "Temp.Flag", "Dew.Point.Temp.degC",
+                 "Dew.Point.Temp.Flag", "Rel.Hum", "Rel.Hum.Flag", "Precip.Amount.mm", "Precip.Amount.Flag", 
+                 "Wind.Dir.10s.deg", "Wind.Dir.Flag", "Wind.Spd.km.h",
+                 "Wind.Spd.Flag", "Visibility.km", "Visibility.Flag",
+                 "Stn.Press.kPa", "Stn.Press.Flag", "Hmdx", "Hmdx.Flag",
+                 "Wind.Chill", "Wind.Chill.Flag", "Weather")
 # MUST BE UPDATED
-dailyNames <- c("Date/Time", "Year", "Month", "Day", "Data Quality", "Max Temp (degC)", "Max Temp Flag", 
+dailyNames <- c("Date Time", "Year", "Month", "Day", "Data Quality", "Max Temp (degC)", "Max Temp Flag", 
                 "Min Temp (degC)", "Min Temp Flag", "Mean Temp (degC)", "Mean Temp Flag",
                 "Heat Deg Days (degC)", "Heat Deg Days Flag", "Cool Deg Days (degC)", "Cool Deg Days Flag",
                 "Total Rain (mm)", "Total Rain Flag", "Total Snow (cm)", "Total Snow Flag",

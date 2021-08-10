@@ -16,7 +16,6 @@ CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   # select columns of interest
   data_input <- data_input[,c(5:10)]
-  
   # rename columns
   colnames(data_input) <- c("Date", "Year", "Month", "Day", "Time", "Temp")
   # make sure they are numeric
@@ -200,4 +199,8 @@ CU_FU <- function(data_input=NULL) {
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc, .direction= c("up"))
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc_log, .direction= c("up"))
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_state, .direction= c("up"))
+  
+  # Remove last day in case there is only a partial day of data
+  CUFUcalculations <- head(CUFUcalculations, -1)
+
 }
