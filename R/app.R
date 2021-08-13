@@ -186,7 +186,7 @@ cherrycoldhardiness <- function() {
     Calculated_LT50_1 <- Calculated_LT50 %>% dplyr::filter(YYYYMMDD50 >= as.Date(Sys.Date()))
     Calculated_LT50_2 <- Calculated_LT50 %>% dplyr::filter(YYYYMMDD50 <= as.Date(Sys.Date()))
     plot(Calculated_LT50$YYYYMMDD50, Calculated_LT50$LT50, # CHANGE THIS IF YOU RENAME YOUR data_input 
-         main= "Lethal Temperature for 10% Bud Damage",
+         main= "Lethal Temperature for 50% Bud Damage",
          pch= NA,
          xlab="Date", 
          ylab="LT50 (C)",
@@ -210,7 +210,7 @@ cherrycoldhardiness <- function() {
     Calculated_LT90_1 <- Calculated_LT90 %>% dplyr::filter(YYYYMMDD90 >= as.Date(Sys.Date()))
     Calculated_LT90_2 <- Calculated_LT90 %>% dplyr::filter(YYYYMMDD90 <= as.Date(Sys.Date()))
     plot(Calculated_LT90$YYYYMMDD90, Calculated_LT90$LT90, # CHANGE THIS IF YOU RENAME YOUR data_input 
-         main= "Lethal Temperature for 10% Bud Damage",
+         main= "Lethal Temperature for 90% Bud Damage",
          pch= NA,
          xlab="Date", 
          ylab="LT90 (C)",
