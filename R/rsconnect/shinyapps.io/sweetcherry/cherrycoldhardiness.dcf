@@ -5,9 +5,7 @@ account: sweetcherry
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4421313
-bundleId: 4866487
+bundleId: 4950724
 url: https://sweetcherry.shinyapps.io/cherrycoldhardiness/
-when: 1627517500.14922
-lastSyncTime: 1627517500.14923
-asMultiple: FALSE
-asStatic: FALSE
+when: 1629647851.40475
+lastSyncTime: 1629647851.40476

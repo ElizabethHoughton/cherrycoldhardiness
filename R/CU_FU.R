@@ -15,9 +15,9 @@
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   # select columns of interest
-  data_input <- data_input[,c(5:10)]
+  data_input <- data_input[,c(3,5:10)]
   # rename columns
-  colnames(data_input) <- c("Date", "Year", "Month", "Day", "Time", "Temp")
+  colnames(data_input) <- c("Station.Name", "Date", "Year", "Month", "Day", "Time", "Temp")
   # make sure they are numeric
   data_input$Month <- as.numeric(data_input$Month)
   data_input$Day <- as.numeric(data_input$Day)
@@ -25,7 +25,7 @@ CU_FU <- function(data_input=NULL) {
   data_input$Time <- as.POSIXct(data_input$Time,format="%H:%M") # this converts the time out of being a factor but adds a day that doesn't make sense
   # sort by year, month, day, time
   data_input <- data_input[
-    order( data_input[,2], data_input[,3], data_input[,4], data_input[,5]),
+    order( data_input[,3], data_input[,4], data_input[,5], data_input[,6]),
   ]
   # replace any NA values with the average of the above and below temp values (if needed)
   data_input$Temp <- (zoo::na.approx(data_input$Temp, rule = 2))
@@ -43,7 +43,7 @@ CU_FU <- function(data_input=NULL) {
   # Make a new column (CU_acc) that is the accumulation of all the calculated CU from each day prior and the current day
   
   data_input <- data.frame(data_input, CU_acc=cumsum(data_input$CU))
-
+  
   #remove the first NA value with na.omit
   data_input <- stats::na.omit(data_input)
   
@@ -57,35 +57,25 @@ CU_FU <- function(data_input=NULL) {
   if (nrow(data_input[which.min(data_input$CU_acc):nrow(data_input), ]) > 1){
     data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
     data_input_2 <-  data.frame(data_input_2, CU_acc_final=cumsum(data_input_2$CU))
+    # remove Station.Name from data_input so there isnt duplicates in data upload
+    station <- as.character(last(data_input$Station.Name)) # built in incase Station.Name problems
+    data_input <- subset(data_input, select = -c(Station.Name))
     data_input <- merge(data_input, data_input_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc"), all = TRUE)
+    data_input$Station.Name <- station
   } else {
-  data_input <- data_input %>% dplyr::mutate(CU_acc_final = 0)
+    data_input <- data_input %>% dplyr::mutate(CU_acc_final = 0)
   }
-
-  #data_input <- read.csv(file='/Users/Elizabeth/Desktop/TestData/TestData.csv')
-  ############################
-  #OLD CODE TO DO THE IF ELSE STATEMENT, does not work with periods of data that to no reach CU_acc min
-    # data_input_2 <- data_input[which.min(data_input$CU_acc):nrow(data_input), ]
-  
-  # Calculate the CU accumulation (CU_acc_final) from just these remaining chill units
-  # data_input_2 <- data.frame(data_input_2, CU_acc_final=cumsum(data_input_2$CU))
-  
-  # add data_input_2$CU_acc_final to your data_input so that you do not lose temp data from days previous
-  
-  # data_input_final <- merge(data_input, data_input_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc"), all = TRUE)
-  
-  ############################
   
   # Replace NA values with 0
   data_input[is.na(data_input)] <- 0
   
   # If CU_acc_final below 1119, assign acquiring, if CU_acc_final above 1119, assign complete
   data_input <- data_input %>% dplyr::mutate(CU_state = case_when(CU_acc_final < 1119 ~ 'acquiring', 
-                                                                              CU_acc_final >= 1119 ~ 'complete'))
+                                                                  CU_acc_final >= 1119 ~ 'complete'))
   
   # For the model, have a column that is 0-1119 (Call it CU_1119)
   data_input <- data_input %>% dplyr::mutate(CU_1119 = case_when(CU_acc_final < 1119 ~ CU_acc_final, 
-                                                                             CU_acc_final >= 1119 ~ 1119))
+                                                                 CU_acc_final >= 1119 ~ 1119))
   
   # FU Calculations
   # FU will begin accumulation after 1119 CU have been accumulated
@@ -105,7 +95,7 @@ CU_FU <- function(data_input=NULL) {
   
   # add FU to CU data frame
   
-  data_input_final <- merge(data_input, data_input_FU, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc", "CU_acc_final", "CU_state", "CU_1119"), all = TRUE)
+  data_input_final <- merge(data_input, data_input_FU, by = c("Date", "Year", "Month", "Day", "Time","Temp", "CU", "CU_acc", "CU_acc_final", "CU_state", "CU_1119", "Station.Name"), all = TRUE)
   
   # Replace NA values with 0
   data_input_final[is.na(data_input_final)] <- 0
@@ -179,7 +169,8 @@ CU_FU <- function(data_input=NULL) {
   #(FU_state)
   #(Temp_min) for graphs
   
-  CUFUcalculations <- CUFUcalculations %>% dplyr::select(c("YYYYMMDD", 
+  CUFUcalculations <- CUFUcalculations %>% dplyr::select(c("Station.Name",
+                                                           "YYYYMMDD", 
                                                            "Temp_min",
                                                            "Temp_max.lag1", 
                                                            "CU_1119", 
@@ -190,8 +181,6 @@ CU_FU <- function(data_input=NULL) {
   # remove first row to deal with lag NA             
   CUFUcalculations <- CUFUcalculations[-1,]
   
-  CUFUcalculations
-  
   # if there is an issue with missing data, this will fill the NA value with the value from the row previous
   
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(Temp_max.lag1, .direction= c("up"))
@@ -199,8 +188,12 @@ CU_FU <- function(data_input=NULL) {
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc, .direction= c("up"))
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_acc_log, .direction= c("up"))
   CUFUcalculations <- CUFUcalculations %>% tidyr::fill(FU_state, .direction= c("up"))
+  CUFUcalculations <- CUFUcalculations %>% tidyr::fill(Station.Name, .direction= c("up"))
   
   # Remove last day in case there is only a partial day of data
   CUFUcalculations <- head(CUFUcalculations, -1)
-
+  
+  # assign all Station.Name values to the value of the last row (then it will be e.g. 'Kelowna' not 'KELOWNA UBCO')
+  CUFUcalculations$Station.Name <- as.character(last(CUFUcalculations$Station.Name))
+  CUFUcalculations
 }

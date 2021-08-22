@@ -23,6 +23,10 @@ Imports:
     nlme,
     car,
     lubridate,
-    AICcmodavg
+    AICcmodavg,
+    jsonlite,
+    owmr,
+    tidyr,
+    leaflet
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1

@@ -1,6 +1,6 @@
-#' Accesses the data from URLs
+#' Accesses data from URLs
 #' 
-#' Retrieves hourly temperature data from the Government of Canada's Historic climate data
+#' This function is used to get the temperature data from the generated URL to access the Gov. of Canada's Historic Climate data base. Modified code originally written by Gavin Simpson that can be found at: https://gist.github.com/gavinsimpson/8c13e3c5f905fd67cf85
 #' 
 #' Variables used: ID, start, end
 #' 

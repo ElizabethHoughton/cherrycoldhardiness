@@ -2,7 +2,7 @@
 
 A shiny app for estimating the 10, 50, and 90% lethal temperatures (LT10, LT50, LT90) of the sweet cherry variety 'Sweetheart' in the Okanagan Valley of British Columbia, Canada.
 
-This app can be used online at: [link] (https://sweetcherry.shinyapps.io/cherrycoldhardiness/) *currently not working*
+This app can be used online at: [link] (https://sweetcherry.shinyapps.io/cherrycoldhardiness/)
 
 Or locally, via an R installation. To install and run the app run the following lines in R:
 
@@ -27,7 +27,8 @@ needed <- c("shiny",
     "AICcmodavg",
     "owmr",
     "jsonlite",
-    "tidyr"
+    "tidyr",
+    "leaflet"
 )
 # This list will eventually be shortened
 

@@ -10,7 +10,7 @@ genURLS(id, start, end, timeframe = c("hourly", "daily", "monthly"))
 hourly temperature data
 }
 \description{
-Retrieves hourly temperature data from the Government of Canada's Historic climate data
+This function is used to generated URL to access the Gov. of Canada's Historic Climate data base. Modified code originally written by Gavin Simpson that can be found at: https://gist.github.com/gavinsimpson/8c13e3c5f905fd67cf85
 }
 \details{
 Variables used: ID, start, end

@@ -1,5 +1,5 @@
 #' Calculate 10 percent lethal temperatures
-#' 
+#'
 #' Variables used: Temp_max.lag1, CU_1119, FU_acc_log, FU_state
 #' 
 #' @details 
@@ -13,8 +13,8 @@
 #' 
 #' @export
 CH_LT10 <- function(Calculated_CU_FU10=NULL){
-  # load in the fitted Model10, Model50, Model90
-  load("data/Model10.Rda") # vs. readRDS("data/Model10.rds") which doesnt seem to be recognized
+  # load in the fitted Model10
+  load("./data/Model10.Rda")
   # predict the LT50 values based on file upload (inputID labeled 'csv_input')
   PredictLT10 <- as.data.frame(AICcmodavg::predictSE.gls(Model10, newdata = Calculated_CU_FU10, se= TRUE))
   # Calculate confidence intervals and create data frames out of them
@@ -32,5 +32,6 @@ CH_LT10 <- function(Calculated_CU_FU10=NULL){
     dplyr::rename(LT10_standard_error = "se.fit")
   PredictLT10$Colour = "black"
   PredictLT10$Colour[PredictLT10$YYYYMMDD >= as.Date(Sys.Date())] = "red"
+  PredictLT10$Station.Name <- Calculated_CU_FU10$Station.Name # add station name just to LT10 so you can cbind LT10, 50, and 90 for download without name duplication
   PredictLT10
 }
