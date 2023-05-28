@@ -42,7 +42,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                           estimate cold hardiness by determining the temperatures that cause cold damage to the flower buds of the 
                                           sweet cherry cultivars 'Sweetheart' and 'Lapins' located within 
                                           the Okanagan Valley of British Columbia, Canada. These models use hourly air temperature data to estimate the lethal temperatures that would result in
-                                        10%, 50%, and 90% damage (LT", tags$sub("10"),", LT", tags$sub("50"),", LT", tags$sub("90"),") to the flower buds. It is important to note that estimations made using these models from the months 
+                                        10%, 50%, and 90% damage (LT10, LT50, LT90) to the flower buds. It is important to note that estimations made using these models from the months 
                                       of May to mid- to late-September generally are not meaniningful as sweet cherry flower buds often have not yet acclimated in this region.")), style = "font-size:17px;color:black;"),
                                     br(),
                                     p(
@@ -69,69 +69,69 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                              br(),
                              p("Seven seasons of 'Sweetheart' and three seasons of 'Lapins' sweet cherry flower bud cold hardiness measurements from orchards in Summerland, British Columbia, Canada were used to develop these models. Additionally, 
                              hourly air temperatures were aquired from near by weather stations. To improve models fit in the spring, when flower buds rapidly lose cold hardiness, models were split into two time periods: 
-                             T1 (fall to later winter) and T2 (spring). The equations of the final models used to predict flower bud lethal temperatures during T1 (fall to late winter) are as follows:", style = "font-size:17px;color:black;"),
+                             t1 (fall to later winter) and t2 (spring). The equations of the final models used to predict flower bud lethal temperatures during t1 (fall to late winter) are as follows:", style = "font-size:17px;color:black;"),
                              br(),
-                             p(strong(HTML(paste0("LT", tags$sub("10, 50, 90 (Sweetheart)"), " = &beta;&#770;", tags$sub("S0"), 
+                             p(strong(HTML(paste0("LT", tags$sub("Sweetheart.t1"), " = &beta;&#770;", tags$sub("S0"), 
                                                   " + &beta;&#770;", tags$sub("S1"), "T", tags$sub("mean.lag1"), 
                                                   " + &beta;&#770;", tags$sub("S2"), "T", tags$sub("mean.lag3"), 
                                                   " + &beta;&#770;", tags$sub("S3"),
                                                   "CU + &beta;&#770;", tags$sub("S4"),
                                                   "FU + &epsilon;", tags$sub("S")))), style = "text-align:center;font-size:17px;color:black;"),
                              br(),
-                             p(strong(HTML(paste0("LT", tags$sub("10, 50, 90 (Lapins)"), " = &beta;&#770;", tags$sub("L0"), 
+                             p(strong(HTML(paste0("LT", tags$sub("Lapins.t1"), " = &beta;&#770;", tags$sub("L0"), 
                                                   " + &beta;&#770;", tags$sub("L1"), "T", tags$sub("mean.lag1"),  
-                                                  " + &beta;&#770;", tags$sub("L2"), "T", tags$sub("mean.lag2"), 
-                                                  "+ &beta;&#770;", tags$sub("L3"), 
-                                                  "CU + &beta;&#770;", tags$sub("L4"), 
+                                                  "+ &beta;&#770;", tags$sub("L2"), 
+                                                  "CU + &beta;&#770;", tags$sub("L3"), 
                                                   "FU + &epsilon;", tags$sub("L")))), style = "text-align:center;font-size:17px;color:black;"),
                              br(),
-                             p(HTML(paste0("Where LT", tags$sub("10, 50, 90 (Sweetheart)"),"  and LT", tags$sub("10, 50, 90 (Lapins)"),"represent the lethal temperature that causes 10%, 50%, and 90% damage (LT", tags$sub("10"),", LT", tags$sub("50"),", LT", tags$sub("90"),") to 'Sweetheart' and 'Lapins' flower buds, respectively. Unique models using the same parameters were developed for LT", tags$sub("10"),", LT", tags$sub("50"),", and LT", tags$sub("90"),". &beta;", tags$sub("S0"), " and &beta;", tags$sub("L0"), " are the intercepts, &beta;", tags$sub("S1")," and &beta;", tags$sub("L1")," are the coefficients of the mean daily temperature from one day prior, &beta;", tags$sub("S2"), 
-                             "  is the coefficient of the mean daily temperature from three days prior, &beta;", tags$sub("L2"), 
-                             "  is the coefficient of the mean daily temperature from two days prior, &beta;", tags$sub("S3"), " and &beta;", tags$sub("L3")," are the coefficients of the accumulated chilling units, &beta;", tags$sub("4"), " are the coefficients of the log transformed accumulated forcing units, and &epsilon;", tags$sub("S"), " and &epsilon;", tags$sub("L")," are the error terms. T", tags$sub("mean.lag1"), ", T", tags$sub("mean.lag2"), " and T", tags$sub("mean.lag3"),
+                             p(HTML(paste0("Where LT", tags$sub("Sweetheart.t1"),"  and LT", tags$sub("Lapins.t1")," represent the lethal temperature that causes 10%, 50%, and 90% damage (LT10, LT50, LT90) to 'Sweetheart' and 'Lapins' flower buds, respectively. 
+                                           Unique models using the same parameters were developed for LT10, LT50, and LT90. &beta;", tags$sub("S0"), " and &beta;", tags$sub("L0"), " are the intercepts, &beta;", tags$sub("S1")," and &beta;", tags$sub("L1")," 
+                                           are the coefficients of the mean daily temperature from one day prior, &beta;", tags$sub("S2"), 
+                             "  is the coefficient of the mean daily temperature from three days prior, &beta;", tags$sub("S3"), " and &beta;", tags$sub("L2")," are the coefficients of the accumulated chilling units, &beta;", tags$sub("S4"), 
+                             " and &beta;", tags$sub("L3"), " are the coefficients of the log transformed accumulated forcing units, and &epsilon;", tags$sub("S"), " and &epsilon;", tags$sub("L")," are the error terms. T", tags$sub("mean.lag1"), " and T", tags$sub("mean.lag3"),
                              " are the values of the mean daily temperature (˚C) from one, two, and three days prior, respectively. CU is the accumulated chilling units and FU is the log transformed accumulated forcing units. 
-                             Estimates of accumulated daily chilling and forcing were calculated from hourly air temperatures using chilling and heat requirement models developed by ", a(href ="https://www.researchgate.net/publication/282060426_Development_of_chilling_and_forcing_relationships_for_modeling_spring_phenology_of_apple_and_sweet_cherry", "Neilsen et al. (2015)", style = "font-size:17px;color:teal;"), 
-                             ". The final best fit models used to predict LT during T2 (spring) for both 'Sweetheart' and 'Lapins' included the intercept only meaning these estimates are equivalent to the mean lethal temperatures measured during this time period. <b>Caution must be taken when using this model to predict spring lethal temperatures as limited data were available for model development during this period.</b>"
+                             Estimates of accumulated daily chilling and forcing were calculated from hourly air temperatures using chilling and heat requirement models developed by ", 
+                             a(href ="https://www.researchgate.net/publication/282060426_Development_of_chilling_and_forcing_relationships_for_modeling_spring_phenology_of_apple_and_sweet_cherry", "Neilsen et al. (2015)", style = "font-size:17px;color:teal;"), 
+                             ". The final best fit models used to predict LT during t2 (spring) for both 'Sweetheart' and 'Lapins' included the intercept only meaning these estimates are equivalent to the mean lethal temperatures measured during this time period. <b>Caution must be taken when using this model to predict spring lethal temperatures as limited data were available for model development during this period.</b>"
                                            )), style = "font-size:17px;color:black;"),
                              br(),
                              h3("Model evaluation", style = "color:black;font-size:27px;"),
                              br(),
-                             p("Plotting the models’ predicted lethal temperatures against the actual lethal temperatures that were measured shows excellent agreement between predicted and observed LT10, LT50, and LT90 for both 'Sweetheart' and 'Lapins'.", style = "font-size:17px;color:black;"),
-                             img(src ="Model_Eval.jpg", height =507.6, width = 718.4, style="display: block; margin-left: auto; margin-right: auto;"),
-                             p(em("One-to-one regression of the predicted and observed lethal temperature values for 'Sweetheart' and 'Lapins'"), style = "text-align:center;font-size:14px;"),
+                             p("Plotting the models’ predicted lethal temperatures against the actual lethal temperatures that were measured shows excellent agreement between predicted and observed LT10, LT50, and LT90 for both 'Sweetheart' and 'Lapins'. Model predictions were 
+                               evaluated both against data included in model development (Fig. 1) and data that was not included in model development (Fig. 2)", style = "font-size:17px;color:black;"),
+                             img(src ="Figure1.jpg", height = 484.25, width = 749.75, style="display: block; margin-left: auto; margin-right: auto;"),
+                             p(em("Figure 1. One-to-one regression of the predicted and observed lethal temperature values for 'Sweetheart' and 'Lapins' evaluated against data used in model development"), style = "text-align:center;font-size:14px;"),
+                             br(),
+                             img(src ="Figure2.jpg", height = 484.25, width = 749.75, style="display: block; margin-left: auto; margin-right: auto;"),
+                             p(em("Figure 2. One-to-one regression of the predicted and observed lethal temperature values for 'Sweetheart' and 'Lapins' evaluated against data not used in model development"), style = "text-align:center;font-size:14px;"),
                              br(),
                              h3("'Sweetheart' model validation", style = "color:black;font-size:27px;"),
                              br(),
-                             p(HTML("In general, the models did a good job predicting lethal temperatures when compared to years of data not used in model development and to several locations within Summerland, BC.
-                             However, <b>caution must be taken when using these models to predict spring lethal temperatures as limited data were available for model development during this period</b>. Lethal temperature estimates
-                               were also compared to lethal temperature measurements for the varieties 'Skeena', 'Sonata', and 'Staccato'. It must be noted that although model fit looks good during the fall and winter season,
-                               <b>caution must be taken when applying the 'Sweetheart' models to other varieties, especially in the spring time if bloom times vary greatly between varieties.</b>"), style = "font-size:17px;color:black;"),
+                             p(HTML("In general, the models did a good job predicting lethal temperatures when compared to years of data not used in model development and to several locations at varying elevations within Summerland, BC (Fig. 3).
+                             However, <b>caution must be taken when using these models to predict spring lethal temperatures as limited data were available for model development during this period</b>."), style = "font-size:17px;color:black;"),
                              br(),
-                             img(src ="Sweetheart_Validation.jpg", height = 180,  style="display: block; margin-left: auto; margin-right: auto;"),
-                             p(em("Examples of model estimates that were compared to year's of lethal temperature data that were not included in model development collected from orchards varying in elevation in Summerland, BC. 
-                                  These plots show the estimated temperature that will cause 50% of the buds to experience cold damage with the 95% confidence intervals on these estimations shown by the shade area.
-                                  (a) high elevation orchard 2020-2021, (b) mid-elevation orchard 2020-2021, (c) low-elevation orchard 2021-2022."), style = "text-align:center;font-size:14px;"),
-                             br(),
-                             img(src ="Sweetheart_Validation_Other.jpg", height = 180,  style="display: block; margin-left: auto; margin-right: auto;"),
-                             p(em("'Sweetheart' lethal temperature estimates during T1 compared to other varities of sweet cherry sampled from orchards located in Summerland, BC. 
-                                  The 95% confidence intervals on the estimations are shown by the shade area.
-                                  (a) 'Skeena' variety 2015-2016, (b) 'Sonata' variety 2015-2016, (c) 'Staccato' variety 2015-2016."), style = "text-align:center;font-size:14px;"),
+                             img(src ="Figure3.jpg", height = 500.5, width = 749.75,  style="display: block; margin-left: auto; margin-right: auto;"),
+                             p(em("Figure 3. Examples of model estimates that were compared to year's of lethal temperature data that were not included in model development collected from orchards varying in elevation in Summerland, BC. 
+                                  These plots show the estimated temperature that will cause 10%, 50%, and 90% (LT10, LT50, LT90) of the buds to experience cold damage with the 95% confidence intervals on these estimations shown by the shade area.
+                                  Models were compared to data collected at a high elevation orchard in 2020-2021, a mid-elevation orchard in 2020-2021, and a low-elevation orchard in 2021-2022."), style = "text-align:center;font-size:14px;"),
                              br(),
                              h3("'Lapins' model validation", style = "color:black;font-size:27px;"),
                              br(),
-                             p(HTML("Much like the 'Sweetheart' models, these models did a fairly good job predicting lethal temperatures when compared to one year of data that was not used in model development. Again, <b>caution must be taken when using these model to predict spring lethal temperatures as limited data were available during this period.</b> 
-                               For comparison, these model predictions were also plotted against lethal temperatures measured from other varieties."), style = "font-size:17px;color:black;"),
+                             p(HTML("Much like the 'Sweetheart' models, these models did a fairly good job predicting lethal temperatures when compared to one year of data that was not used in model development. 
+                             Again, <b>caution must be taken when using these model to predict spring lethal temperatures as limited data were available during this period.</b>"), style = "font-size:17px;color:black;"),
                              br(),
-                             img(src ="Lapins_Validation.jpg", height = 180,  style="display: block; margin-left: auto; margin-right: auto;"),
-                             p(em("Examples of model estimates that were compared to one year of lethal temperature data that was not included in model development collected from an AAFC research orchard in Summerland, BC in the 2014-2015 season. 
+                             img(src ="Figure4.jpg", height = 202.75, width = 749.75,  style="display: block; margin-left: auto; margin-right: auto;"),
+                             p(em("Figure 4. Examples of model estimates that were compared to one year of lethal temperature data that was not included in model development collected from an AAFC research orchard in Summerland, BC in the 2014-2015 season. 
                                   These plots show the estimated temperature that will cause 10%, 50%, and 90% of the buds to experience cold damage with the 95% confidence intervals on these estimations shown by the shade area.
                                   (a) 10% lethal temperature, (b) 50% lethal temperature, (c) 90% lethal temperature."), style = "text-align:center;font-size:14px;"),
                              br(),
-                             img(src ="Lapins_Validation_Other.jpg", height = 180,  style="display: block; margin-left: auto; margin-right: auto;"),
-                             p(em("'Lapins' lethal temperature estimates during T1 compared to other varities of sweet cherry sampled from orchards located in Summerland, BC. 
-                                  The 95% confidence intervals on the estimations are shown by the shade area.
-                                  (a) 'Skeena' variety 2015-2016, (b) 'Sonata' variety 2015-2016, (c) 'Staccato' variety 2015-2016."), style = "text-align:center;font-size:14px;"),
-                            
-                             
+                             h3("Model application to other varieties", style = "color:black;font-size:27px;"),
+                             br(),
+                             p(HTML("Lethal temperature estimates from the 'Sweetheart' and 'Lapins' models were also compared to lethal temperature measurements for the varieties 'Skeena', 'Sonata', and 'Staccato'. It must be noted that although model fit looks good during the fall and winter season,
+                               <b>caution must be taken when applying the 'Sweetheart' models to other varieties, especially in the spring time if bloom times vary greatly between varieties.</b>"), style = "font-size:17px;color:black;"),
+                             br(),
+                             img(src ="Figure5.jpg", height = 353.25, width = 749.75,  style="display: block; margin-left: auto; margin-right: auto;"),
+                             p(em("Figure 5. Predicted ‘Sweetheart’ and ‘Lapins’ LT50 values in the t1 period plotted against observed ‘Staccato’, ‘Sonata’, and ‘Skeena’ cultivar LT50 values."), style = "text-align:center;font-size:14px;"),
                              ),
                            
                            
@@ -165,7 +165,8 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                       a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-05-07%7C2021-08-03&dlyRange=2012-05-10%7C2021-08-02&mlyRange=%7C&StationID=50269&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=1&searchMethod=contains&Month=8&Day=3&txtStationName=penticton&timeframe=1&Year=2021", "Penticton", style = "font-size:17px;color:teal;"),
                                       ". If you select one of these weather stations, three days worth of weather forecast from", style = "font-size:17px;color:black;",
                                       a(href="https://openweathermap.org", "OpenWeather", style = "font-size:17px;color:teal;"),
-                                      HTML(" will also be inputted to make predictions using these models. <b>This option may take several minutes to load</b>.")
+                                      HTML(" will also be inputted to make predictions using these models. If the Government of Canada's historical climate database website is undergoing maintenance or has not been updated with the appropriate data, this option will not work and you will get the message <i>'An error has occurred. Check your logs or contact the app author for clarification.'</i> You can still upload data to the website to be inputted into the models if this occurs.
+                                           <b>This option may take several minutes to load</b>.")
                                     )),
                           
 
@@ -211,19 +212,19 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                mainPanel(
                                  tabsetPanel(
                                    tabPanel(
-                                     title = (HTML(paste0("LT", tags$sub("10")))),
+                                     title = (HTML(paste0("LT10"))),
                                      plotOutput("plot_LT10", width= "100%", height=600),
                                      verbatimTextOutput("description1"), #verbatimTextOutput can be used in a panel
                                      tags$style(type="text/css", "#description1 {white-space: pre-wrap; word-break: break-word; # wraps text and makes sure it breaks with each word (not cutting up words)
                                                 background-color: rgba(255,255,255,0.40); color: black; border-style: none; font-family: calibri; font-size: 16px;}")), 
                                    tabPanel(
-                                     title = (HTML(paste0("LT", tags$sub("50")))),
+                                     title = (HTML(paste0("LT50"))),
                                      plotOutput("plot_LT50", width= "100%", height=600),
                                      verbatimTextOutput("description2"),
                                      tags$style(type="text/css", "#description2 {white-space: pre-wrap; word-break: break-word; # wraps text and makes sure it breaks with each word (not cutting up words)
                                                 background-color: rgba(255,255,255,0.40); color: black; border-style: none; font-family: calibri; font-size: 16px;}")), 
                                    tabPanel(
-                                     title = (HTML(paste0("LT", tags$sub("90")))),
+                                     title = (HTML(paste0("LT90"))),
                                      plotOutput("plot_LT90", width= "100%", height=600),
                                      verbatimTextOutput("description3"),
                                      tags$style(type="text/css", "#description3 {white-space: pre-wrap; word-break: break-word; # wraps text and makes sure it breaks with each word (not cutting up words)
@@ -277,12 +278,13 @@ draw_plot_LT10 <- function(Calculated_LT10, Calculated_LT90)
 {#select for values greater than or equal to Sys.Date()
   Calculated_LT10_1 <- Calculated_LT10 %>% dplyr::filter(YYYYMMDD >= as.Date(Sys.Date()))
   Calculated_LT10_2 <- Calculated_LT10 %>% dplyr::filter(YYYYMMDD <= as.Date(Sys.Date()))
+  
   par(mar = c(3.6, 4.8, 4.1, 2.1)) # set margins so that there is room for y axis label 
   plot(Calculated_LT10$YYYYMMDD, Calculated_LT10$LT10, # CHANGE THIS IF YOU RENAME YOUR data_input 
        main= "Lethal Temperature for 10% Bud Damage",
        pch= NA,
        xlab="", 
-       ylab= expression("LT"[10]*" (˚C)"),
+       ylab= expression("LT10 (˚C)"),
        xlim=c((as.Date(min(Calculated_LT10$YYYYMMDD))+30), as.Date(max(Calculated_LT10$YYYYMMDD)) - 1),
        cex.axis=1.5,
        cex.lab=1.5,
@@ -293,8 +295,8 @@ draw_plot_LT10 <- function(Calculated_LT10, Calculated_LT90)
   lines(Calculated_LT10_2$YYYYMMDD, Calculated_LT10_2$LT10, lty = 1, lwd=2, col = Calculated_LT10_2$Colour)
   lines(Calculated_LT10_1$YYYYMMDD, Calculated_LT10_1$LT10, lty = 1, lwd=2, col = Calculated_LT10_1$Colour)
   lines(Calculated_LT10$YYYYMMDD, Calculated_LT10$Temp_min, lty = 1, col= "blue", lwd=2) # daily minimum temp
-  legend("bottomleft", legend=c(expression(paste('LT'[10], ' (Recorded Weather)')),
-                                expression(paste('LT'[10], ' (Weather Predictions)')),
+  legend("bottomleft", legend=c(expression(paste('LT10', ' (Recorded Weather)')),
+                                expression(paste('LT10', ' (Weather Predictions)')),
                                 expression(paste('Daily Minimum Temperature'))),
          col=c("black", "red","blue"), lty=c(1, 1, 1), lwd=c(2.5, 2.5, 2.5), cex=1.3, bty = "n") # add legend
 }
@@ -309,7 +311,7 @@ draw_plot_LT50 <- function(Calculated_LT50, Calculated_LT90)
        main= "Lethal Temperature for 50% Bud Damage",
        pch= NA,
        xlab="", 
-       ylab= expression("LT"[50]*" (˚C)"),
+       ylab= expression("LT50 (˚C)"),
        xlim=c((as.Date(min(Calculated_LT50$YYYYMMDD50))+30), as.Date(max(Calculated_LT50$YYYYMMDD50)) - 1),
        cex.axis=1.5,
        cex.lab=1.5,
@@ -320,8 +322,8 @@ draw_plot_LT50 <- function(Calculated_LT50, Calculated_LT90)
   lines(Calculated_LT50_2$YYYYMMDD50, Calculated_LT50_2$LT50, lty = 1, lwd=2, col = Calculated_LT50_2$Colour)
   lines(Calculated_LT50_1$YYYYMMDD50, Calculated_LT50_1$LT50, lty = 1, lwd=2, col = Calculated_LT50_1$Colour)
   lines(Calculated_LT50$YYYYMMDD50, Calculated_LT50$Temp_min, lty = 1, col= "blue", lwd=2) # daily minimum temp
-  legend("bottomleft", legend=c(expression(paste('LT'[50], ' (Recorded Weather)')),
-                                expression(paste('LT'[50], ' (Weather Predictions)')),
+  legend("bottomleft", legend=c(expression(paste('LT50', ' (Recorded Weather)')),
+                                expression(paste('LT50', ' (Weather Predictions)')),
                                 expression(paste('Daily Minimum Temperature'))),
          col=c("black", "red","blue"), lty=c(1, 1, 1), lwd=c(2.5, 2.5, 2.5), cex=1.3, bty = "n") # add legend
 }
@@ -336,7 +338,7 @@ draw_plot_LT90 <- function(Calculated_LT90)
        main= "Lethal Temperature for 90% Bud Damage",
        pch= NA,
        xlab="", 
-       ylab= expression("LT"[90]*" (˚C)"),
+       ylab= expression("LT90 (˚C)"),
        xlim=c((as.Date(min(Calculated_LT90$YYYYMMDD90))+ 30), as.Date(max(Calculated_LT90$YYYYMMDD90) - 1)),
        cex.axis=1.5,
        cex.lab=1.5,
@@ -347,8 +349,8 @@ draw_plot_LT90 <- function(Calculated_LT90)
   lines(Calculated_LT90_2$YYYYMMDD90, Calculated_LT90_2$LT90, lty = 1, lwd=2, col = Calculated_LT90_2$Colour)
   lines(Calculated_LT90_1$YYYYMMDD90, Calculated_LT90_1$LT90, lty = 1, lwd=2, col = Calculated_LT90_1$Colour)
   lines(Calculated_LT90$YYYYMMDD90, Calculated_LT90$Temp_min, lty = 1, col= "blue", lwd=2) # daily minimum temp
-  legend("bottomleft", legend=c(expression(paste('LT'[90], ' (Recorded Weather)')),
-                                expression(paste('LT'[90], ' (Weather Predictions)')),
+  legend("bottomleft", legend=c(expression(paste('LT90', ' (Recorded Weather)')),
+                                expression(paste('LT90', ' (Weather Predictions)')),
                                 expression(paste('Daily Minimum Temperature'))),
          col=c("black", "red","blue"), lty=c(1, 1, 1), lwd=c(2.5, 2.5, 2.5), cex=1.3, bty = "n") # add legend
   
@@ -356,7 +358,7 @@ draw_plot_LT90 <- function(Calculated_LT90)
 
 ###############################################################################
 # Currently placing externally accessed functions in the app.R file to simply deploy to shinyapp.io
-
+ 
 # CU_FU function to calculate chill and forcing units
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
@@ -378,14 +380,28 @@ CU_FU <- function(data_input=NULL) {
   
   data_input_mean <- data_input #save to calculate daily max and lag temps
   
+  # OLD APPROACH FOR CU CALCULATIONS USING THE ChillModels 'cherry_model' function
+  # # Calculate CU
+  # 
+  # data_input$CU <- ChillModels::cherry_model(data_input$Temp, total=FALSE)
+  # 
+  # # Make a new column (CU_acc) that is the accumulation of all the calculated CU from each day prior and the current day
+  # 
+  # data_input <- data.frame(data_input, CU_acc=cumsum(data_input$CU))
+  # 
+  
+  # NEW CU CALCULATION APPROACH USING EQUATION FROM NEILSEN ET AL. 2015
   # Calculate CU
   
-  data_input$CU <- ChillModels::cherry_model(data_input$Temp, total=FALSE)
-  
-  # Make a new column (CU_acc) that is the accumulation of all the calculated CU from each day prior and the current day
-  
+  data_input <- data_input %>% mutate(CU = case_when(Temp < -2 ~ 0, 
+                                                      Temp >= 18 ~ -1,
+                                                      Temp >= 16 & Temp < 18 ~ -0.5,
+                                                      Temp < 16 & Temp >= -2 ~
+                                                      1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+  # Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
   data_input <- data.frame(data_input, CU_acc=cumsum(data_input$CU))
-  
+
   #remove the first NA value with na.omit
   data_input <- stats::na.omit(data_input)
   
@@ -587,24 +603,24 @@ CH_LT10 <- function(Calculated_CU_FU10=NULL){
   PredictLT10$Station.Name <- Calculated_CU_FU10$Station.Name # add station name just to LT10 so you can cbind LT10, 50, and 90 for download without name duplication
   PredictLT10$FU_acc <- Calculated_CU_FU10$FU_acc
 
-  PredictLT10$LT10.30 <- -4.30928571
-  PredictLT10$LT10.CIUpper.30 <- -3.83034136
-  PredictLT10$LT10.CILower.30 <- -4.7882301
+  PredictLT10$LT10.30 <- -4.3
+  PredictLT10$LT10.CIUpper.30 <- -3.8
+  PredictLT10$LT10.CILower.30 <- -4.8
   PredictLT10$LT10_standard_error.30 <- 0.2443594
   
-  PredictLT10$LT10 <- ifelse(PredictLT10$FU_acc < 30, # if FU_accl is less than 30
+  PredictLT10$LT10 <- ifelse(PredictLT10$FU_acc < 30, # if FU_acc is less than 30
                              PredictLT10$LT10, # assign  it its original values
                              PredictLT10$LT10.30) # otherwise give it LT10 to the value of that averaged model
   
-  PredictLT10$LT10.CIUpper <- ifelse(PredictLT10$FU_acc < 30, # if FU_accl is greater than or euqal to 30
+  PredictLT10$LT10.CIUpper <- ifelse(PredictLT10$FU_acc < 30, # if FU_acc is less than 30
                                      PredictLT10$LT10.CIUpper, # assign  it its original values
                                      PredictLT10$LT10.CIUpper.30) # otherwise give it LT10 to the value of that averaged model
   
-  PredictLT10$LT10.CILower <- ifelse(PredictLT10$FU_acc < 30, # if FU_accl is greater than or euqal to 30
+  PredictLT10$LT10.CILower <- ifelse(PredictLT10$FU_acc < 30, # if FU_acc is less than 30
                                      PredictLT10$LT10.CILower,# assign  it its original values
                                      PredictLT10$LT10.CILower.30) # otherwise give it LT10 to the value of that averaged model
   
-  PredictLT10$LT10_standard_error <- ifelse(PredictLT10$FU_acc < 30, # if FU_accl is greater than or euqal to 30
+  PredictLT10$LT10_standard_error <- ifelse(PredictLT10$FU_acc < 30, # if FU_acc is less than 30
                                             PredictLT10$LT10_standard_error, # assign  it its original values
                                             PredictLT10$LT10_standard_error.30) # otherwise give it LT10 to the value of that averaged model
   PredictLT10
@@ -636,9 +652,9 @@ CH_LT50 <- function(Calculated_CU_FU50=NULL){
   PredictLT50$Colour[PredictLT50$YYYYMMDD >= as.Date(Sys.Date())] = "red"
   PredictLT50$FU_acc <- Calculated_CU_FU50$FU_acc
   
-  PredictLT50$LT50.30 <- -5.832143
-  PredictLT50$LT50.CIUpper.30 <- -5.337064
-  PredictLT50$LT50.CILower.30 <- -6.327222
+  PredictLT50$LT50.30 <- -5.8
+  PredictLT50$LT50.CIUpper.30 <- -5.3
+  PredictLT50$LT50.CILower.30 <- -6.3
   PredictLT50$LT50_standard_error.30 <- 0.2525914
   
   
@@ -687,9 +703,9 @@ CH_LT90 <- function(Calculated_CU_FU90=NULL){
   PredictLT90$Colour[PredictLT90$YYYYMMDD >= as.Date(Sys.Date())] = "red"
   PredictLT90$FU_acc <- Calculated_CU_FU90$FU_acc
   
-  PredictLT90$LT90.30 <- -7.352857
-  PredictLT90$LT90.CIUpper.30 <- -6.58457
-  PredictLT90$LT90.CILower.30 <- -8.121145
+  PredictLT90$LT90.30 <- -7.4
+  PredictLT90$LT90.CIUpper.30 <- -6.6
+  PredictLT90$LT90.CILower.30 <- -8.1
   PredictLT90$LT90_standard_error.30 <- 0.3919834
   
   PredictLT90$LT90 <- ifelse(PredictLT90$FU_acc < 30, # if FU_accl is less than 30
@@ -741,10 +757,10 @@ CH_LT10_lapins <- function(Calculated_CU_FU10=NULL){
   PredictLT10$Station.Name <- Calculated_CU_FU10$Station.Name # add station name just to LT10 so you can cbind LT10, 50, and 90 for download without name duplication
   PredictLT10$FU_acc <- Calculated_CU_FU10$FU_acc
   
-  PredictLT10$LT10.30 <- -4.08375
-  PredictLT10$LT10.CIUpper.30 <- -3.497831
-  PredictLT10$LT10.CILower.30 <- -4.669669
-  PredictLT10$LT10_standard_error.30 <- 0.2989382
+  PredictLT10$LT10.30 <- -4.1
+  PredictLT10$LT10.CIUpper.30 <- -3.5
+  PredictLT10$LT10.CILower.30 <- -4.7
+  PredictLT10$LT10_standard_error.30 <- 0.3
   
   PredictLT10$LT10 <- ifelse(PredictLT10$FU_acc < 25, # if FU_accl is less than 25
                              PredictLT10$LT10, # assign  it its original values
@@ -791,10 +807,10 @@ CH_LT50_lapins <- function(Calculated_CU_FU50=NULL){
   PredictLT50$Colour[PredictLT50$YYYYMMDD >= as.Date(Sys.Date())] = "red"
   PredictLT50$FU_acc <- Calculated_CU_FU50$FU_acc
   
-  PredictLT50$LT50.30 <- -5.19125
-  PredictLT50$LT50.CIUpper.30 <- -4.544011
-  PredictLT50$LT50.CILower.30 <- -5.838489
-  PredictLT50$LT50_standard_error.30 <- 0.3302242
+  PredictLT50$LT50.30 <- -5.2
+  PredictLT50$LT50.CIUpper.30 <- -4.5
+  PredictLT50$LT50.CILower.30 <- -5.8
+  PredictLT50$LT50_standard_error.30 <- 0.3
   
   
   PredictLT50$LT50 <- ifelse(PredictLT50$FU_acc < 25, # if FU_accl is less than 25
@@ -843,9 +859,9 @@ CH_LT90_lapins <- function(Calculated_CU_FU90=NULL){
   PredictLT90$FU_acc <- Calculated_CU_FU90$FU_acc
   
   PredictLT90$LT90.30 <- -6.3
-  PredictLT90$LT90.CIUpper.30 <- -5.390393
-  PredictLT90$LT90.CILower.30 <- -7.209607
-  PredictLT90$LT90_standard_error.30 <- 0.4640851
+  PredictLT90$LT90.CIUpper.30 <- -5.4
+  PredictLT90$LT90.CILower.30 <- -7.2
+  PredictLT90$LT90_standard_error.30 <- 0.5
 
   
   PredictLT90$LT90 <- ifelse(PredictLT90$FU_acc < 25, # if FU_accl is less than 25
@@ -1063,6 +1079,9 @@ server <- function(input, output, session) {
         # select data from august the year prior to yesterdays date
         summerland_data <- summerland_data %>% dplyr::filter(summerland_data[,6] >= select_date1$FROM & 
                                                                summerland_data[,6] <= select_date1$YDAY)
+        
+        summerland_data$Date.Time.LST <- as.POSIXct(summerland_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+          
         # remove the first column
         infile = summerland_data[,-1]
         
@@ -1188,6 +1207,9 @@ server <- function(input, output, session) {
         # select data from august this year to yesterday's date
         summerland_data <- summerland_data %>% dplyr::filter(summerland_data[,6] >= select_date2$FROM & 
                                                                summerland_data[,6] <= select_date2$YDAY)
+        
+        summerland_data$Date.Time.LST <- as.POSIXct(summerland_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile <- summerland_data[,-1]
         
@@ -1317,6 +1339,9 @@ server <- function(input, output, session) {
         # select data from august the year prior to yesterday's date
         penticton_data <- penticton_data %>% dplyr::filter(penticton_data[,6] >= select_date1$FROM & 
                                                              penticton_data[,6] <= select_date1$YDAY)
+        
+        penticton_data$Date.Time.LST <- as.POSIXct(penticton_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile = penticton_data[,-1]
         
@@ -1442,6 +1467,9 @@ server <- function(input, output, session) {
         # select data from august this year to yesterday's date
         penticton_data <- penticton_data %>% dplyr::filter(penticton_data[,6] >= select_date2$FROM & 
                                                              penticton_data[,6] <= select_date2$YDAY)
+        
+        penticton_data$Date.Time.LST <- as.POSIXct(penticton_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile <- penticton_data[,-1]
         
@@ -1571,6 +1599,9 @@ server <- function(input, output, session) {
         # select data from august the year prior to yesterday's date
         kelowna_data <- kelowna_data %>% dplyr::filter(kelowna_data[,6] >= select_date1$FROM & 
                                                          kelowna_data[,6] <= select_date1$YDAY)
+        
+        kelowna_data$Date.Time.LST <- as.POSIXct(kelowna_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile = kelowna_data[,-1]
         
@@ -1696,6 +1727,9 @@ server <- function(input, output, session) {
         # select data from august this year to yesterday's date
         kelowna_data <- kelowna_data %>% dplyr::filter(kelowna_data[,6] >= select_date2$FROM & 
                                                          kelowna_data[,6] <= select_date2$YDAY)
+        
+        kelowna_data$Date.Time.LST <- as.POSIXct(kelowna_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile <- kelowna_data[,-1]
         
@@ -1825,6 +1859,8 @@ server <- function(input, output, session) {
         vernon_data <- vernon_data %>% dplyr::filter(vernon_data[,6] >= select_date1$FROM & 
                                                        vernon_data[,6] <= select_date1$YDAY)
         
+        vernon_data$Date.Time.LST <- as.POSIXct(vernon_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile = vernon_data[,-1]
         
@@ -1951,6 +1987,9 @@ server <- function(input, output, session) {
         # select data from august this year to yesterday's date
         vernon_data <- vernon_data %>% dplyr::filter(vernon_data[,6] >= select_date2$FROM & 
                                                        vernon_data[,6] <= select_date2$YDAY)
+        
+        vernon_data$Date.Time.LST <- as.POSIXct(vernon_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
         # remove the first column
         infile <- vernon_data[,-1]
         
