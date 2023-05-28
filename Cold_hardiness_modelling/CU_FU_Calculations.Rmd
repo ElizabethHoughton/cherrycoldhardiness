@@ -1,0 +1,2078 @@
+---
+title: "Calculating CU and FU using equation from Neilsen et al. 2015"
+author: "Elizabeth Houghton"
+output:
+  html_document:
+    
+    toc: true
+    toc_float: true
+    theme: cerulean
+    highlight: kate
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+# DO NOT ALTER CODE IN THIS CHUNK
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This page was last updated on `r format(Sys.time(), '%B %d, %Y')`.
+
+* * *
+# 1.0 Initial set up and calculations
+
+```{r, results="hide", message=FALSE, warning = FALSE}
+# import required packages
+library(plyr)
+library(zoo)
+library(lubridate)
+library(tidyverse)
+library(MuMIn)
+library(nlme)
+library(report)
+library(nlstools)
+library(Metrics)
+library(geosphere)
+library(chillR)
+library(ChillModels)
+library(ggplot2)
+library(DT)
+library(hydroGOF)
+```
+
+```{R}
+cite_packages()
+```
+
+* * *
+## 1.1 Example code for chill unit calculations
+
+```{R, eval=F}
+# # Chill units (CU) were calculated using hourly air temperatures and the temperature effectiveness curve for chilling from Neilsen et al. 2015 as shown in the following function. 
+# 
+# Temp.df <- Temp.df %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0, 
+#                                Temp >= 18 ~ -1, 
+#                                Temp >= 16 & Temp < 18 ~ -0.5,
+#                                Temp < 16 & Temp >= -2 ~
+#                                  1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+# 
+# # Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+# #   
+# Temp.df <- data.frame(Temp.df, accumulated_cherry_model=cumsum(Temp.df$cherry_model_raw))
+# 
+# # Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+#       # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+#       # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+# 
+# if (nrow(Temp.df[(which.min(Temp.df$cherry_model) + 1 ):nrow(Temp.df), ]) > 1){ # + 1 must be removed in the Shiny app to account for data that                                                                                       is imported for the day of
+#     Temp.df_2 <- Temp.df[(which.min(Temp.df$cherry_model) + 1 ):nrow(Temp.df), ]
+#     Temp.df_2 <-  data.frame(Temp.df_2, cherry_model_final=cumsum(Temp.df_2$cherry_model_raw))
+#     Temp.df <- merge(Temp.df, Temp.df_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model", "Site"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less)
+#   } else {
+#   Temp.df <- Temp.df %>% dplyr::mutate(cherry_model_final = 0)
+#   }
+# 
+# # Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+# 
+# # Add column for sweetheart chill accumulation completion
+# 
+# # if chill units have not yet started accumulating, assign value of zero
+# Temp.df$cherry_model_final[is.na(Temp.df$cherry_model_final)] <- 0
+# 
+# # create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+# Temp.df <- Temp.df %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+# 
+# # We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins
+# Temp.df$cherry_model_final[Temp.df$cherry_model_final >= 1119] <- 1119
+```
+
+
+* * *
+## 1.2 Example code for forcing unit calculations
+
+```{R, eval=F}
+# 'Forcing units' were calculated using hourly air temperatures and the temperature effectiveness curve for forcing from Neilsen et al. 2015 with the bud break coefficients
+# 
+# Temp.df <- Temp.df %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0, 
+#                                                                   Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+#
+# FU at temperatures below 5 C were assigned zero otherwise this equation would accumulated some degree of FU even at very negative temperatures (which conceptually doesnt make sense). 5 C was chosen due to greenhouse temperatures usein in Neilsen et al. 2015 to develop the FU equation.
+#
+# # If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+# Temp.df$Sweetheart_cherry_forcingBB[Temp.df$Sweetheart_cherry_model == '0'] <- 0
+# 
+# # determine the accumulated values for the forcing units
+# Temp.df <-  data.frame(Temp.df, Sweetheart_cherry_forcingBB_final=cumsum(Temp.df$Sweetheart_cherry_forcingBB))
+# 
+# # We will also be working with log transform chilling units
+# Temp.df$Sweetheart_cherry_forcingBB_final_log <- log(Temp.df$Sweetheart_cherry_forcingBB_final + 10)
+# 
+# # Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# 
+# # create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+# 
+# Temp.df <- Temp.df %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+* * *
+## 1.3 Example code for temperature and temperature lag calculations
+
+```{R, eval=F}
+# # calculate max, min, and mean temperature from Temp.df that has hourly_temp, Year, Month, and Day columns
+# 
+# Temp_max <- aggregate(hourly_temp ~ Year + Month + Day, Temp.df, max)
+# Temp_min <- aggregate(hourly_temp ~ Year + Month + Day, Temp.df, min)
+# Temp_mean <- aggregate(hourly_temp ~ Year + Month + Day, Temp.df, mean)
+# 
+# # add column for temperature lags for 1, 2, and 3 days prior
+# 
+# Temp_max.lag1.df <- data.frame(Temp.df, Temp_max.lag1 = dplyr::lag(Temp.df$Temp_max))
+# Temp_max.lag2.df <- data.frame(Temp.df, Temp_max.lag2 = dplyr::lag(Temp.df$Temp_max,2))
+# Temp_max.lag3.df <- data.frame(Temp.df, Temp_max.lag3 = dplyr::lag(Temp.df$Temp_max,3))
+# 
+# Temp_min.lag1.df <- data.frame(Temp.df, Temp_min.lag1 = dplyr::lag(Temp.df$Temp_min))
+# Temp_min.lag2.df <- data.frame(Temp.df, Temp_min.lag2 = dplyr::lag(Temp.df$Temp_min,2))
+# Temp_min.lag3.df <- data.frame(Temp.df, Temp_min.lag3 = dplyr::lag(Temp.df$Temp_min,3))
+# 
+# Temp_mean.lag1.df <- data.frame(Temp.df, Temp_mean.lag1 = dplyr::lag(Temp.df$Temp_mean))
+# Temp_mean.lag2.df <- data.frame(Temp.df, Temp_mean.lag2 = dplyr::lag(Temp.df$Temp_mean,2))
+# Temp_mean.lag3.df <- data.frame(Temp.df, Temp_mean.lag3 = dplyr::lag(Temp.df$Temp_mean,3))
+```
+
+* * *
+## 1.4 Example code for photoperiod calculations
+
+```{R, eval=F}
+# # Example latitude = 49.6
+# # Jday is the Julian day
+# Photoperiod.df <- as.data.frame(daylength(49.6, Temp.df$Jday))
+# Temp.df$Photoperiod <- Photoperiod.df$Daylength
+```
+
+* * *
+# 2.0 Import required data for CU and FU calculations
+
+```{R}
+# This dataframe includes six seasons of 'Sweetheart' sweet cherry lethal temperature data (LT10, LT50, LT90) collected in Summerland, BC Canada from 2014-15, 2015-16, 2016-17, 2017-18, 2019-20, 2020-21
+# This dataframe also includes the calculates chill unit accumulation, forcing unit calculation, daily temperatures and lag temperatures, as well as Photoperiod as demonstrated above yearly form Sept 15 to April 30.
+# dates with sample sizes less than n=10 were omitted
+
+Summerland.CS <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Summerland_CS_hourly.csv')
+Summerland.CS$Date <- as.Date(Summerland.CS$Date)
+
+# drop X
+Summerland.CS = subset(Summerland.CS, select = -c(X))
+
+# Coldstream
+Coldstream <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Coldstream_hobo.csv')
+Coldstream$Date <- as.Date(Coldstream$Date)
+
+# drop Date_Time
+Coldstream = subset(Coldstream, select = -c(Date_Time))
+
+# Belgo
+Belgo <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Belgo_hobo.csv')
+Belgo$Date <- as.Date(Belgo$Date)
+Belgo = subset(Belgo, select = -c(Date_Time))
+
+# Savanna
+Savanna <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Savanna_hobo.csv')
+Savanna$Date <- as.Date(Savanna$Date)
+Savanna = subset(Savanna, select = -c(Date_Time))
+
+# Martens
+Martens <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Martens_hobo.csv')
+Martens$Date <- as.Date(Martens$Date)
+Martens = subset(Martens, select = -c(Date_Time))
+
+# Martens_Slater
+Slater <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/temp_raw_data/Martens_Slater_hobo.csv')
+Slater$Date <- as.Date(Slater$Date)
+Slater = subset(Slater, select = -c(Date_Time))
+# drop Date_Time
+Slater = subset(Slater, select = -c(Site2))
+```
+
+* * *
+# 3.0 Calculate CU
+
+# 3.1 Calculate CU - Summerland CS
+```{R}
+Summerland.CS.1 <- subset(Summerland.CS, Date >= '2008-08-01' & Date <= '2009-04-30')
+Summerland.CS.2 <- subset(Summerland.CS, Date >= '2009-08-01' & Date <= '2010-04-30')
+Summerland.CS.3 <- subset(Summerland.CS, Date >= '2010-08-01' & Date <= '2011-04-30')
+Summerland.CS.4 <- subset(Summerland.CS, Date >= '2011-08-01' & Date <= '2012-04-30')
+Summerland.CS.5 <- subset(Summerland.CS, Date >= '2012-08-01' & Date <= '2013-04-30')
+Summerland.CS.6 <- subset(Summerland.CS, Date >= '2013-08-01' & Date <= '2014-04-30')
+Summerland.CS.7 <- subset(Summerland.CS, Date >= '2014-08-01' & Date <= '2015-04-30')
+Summerland.CS.8 <- subset(Summerland.CS, Date >= '2015-08-01' & Date <= '2016-04-30')
+Summerland.CS.9 <- subset(Summerland.CS, Date >= '2016-08-01' & Date <= '2017-04-30')
+Summerland.CS.10 <- subset(Summerland.CS, Date >= '2017-08-01' & Date <= '2018-04-30')
+Summerland.CS.11 <- subset(Summerland.CS, Date >= '2018-08-01' & Date <= '2019-04-30')
+Summerland.CS.12 <- subset(Summerland.CS, Date >= '2019-08-01' & Date <= '2020-04-30')
+Summerland.CS.13 <- subset(Summerland.CS, Date >= '2020-08-01' & Date <= '2021-04-30')
+Summerland.CS.14 <- subset(Summerland.CS, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Summerland.CS.1 <- Summerland.CS.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.1 <- data.frame(Summerland.CS.1, cherry_model=cumsum(Summerland.CS.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.1[(which.min(Summerland.CS.1$cherry_model) + 1 ):nrow(Summerland.CS.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.1_2 <- Summerland.CS.1[(which.min(Summerland.CS.1$cherry_model) + 1 ):nrow(Summerland.CS.1), ]
+    Summerland.CS.1_2 <-  data.frame(Summerland.CS.1_2, cherry_model_final=cumsum(Summerland.CS.1_2$cherry_model_raw))
+    Summerland.CS.1 <- merge(Summerland.CS.1, Summerland.CS.1_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.1 <- Summerland.CS.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.1$cherry_model_final[is.na(Summerland.CS.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.1 <- Summerland.CS.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.1$cherry_model_accumulated <- Summerland.CS.1$cherry_model_final
+Summerland.CS.1$cherry_model_final[Summerland.CS.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Summerland.CS.2 <- Summerland.CS.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.2 <- data.frame(Summerland.CS.2, cherry_model=cumsum(Summerland.CS.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.2[(which.min(Summerland.CS.2$cherry_model) + 1 ):nrow(Summerland.CS.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.2_2 <- Summerland.CS.2[(which.min(Summerland.CS.2$cherry_model) + 1 ):nrow(Summerland.CS.2), ]
+    Summerland.CS.2_2 <-  data.frame(Summerland.CS.2_2, cherry_model_final=cumsum(Summerland.CS.2_2$cherry_model_raw))
+    Summerland.CS.2 <- merge(Summerland.CS.2, Summerland.CS.2_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.2 <- Summerland.CS.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.2$cherry_model_final[is.na(Summerland.CS.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.2 <- Summerland.CS.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.2$cherry_model_accumulated <- Summerland.CS.2$cherry_model_final
+Summerland.CS.2$cherry_model_final[Summerland.CS.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Summerland.CS.3 <- Summerland.CS.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.3 <- data.frame(Summerland.CS.3, cherry_model=cumsum(Summerland.CS.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.3[(which.min(Summerland.CS.3$cherry_model) + 1 ):nrow(Summerland.CS.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.3_2 <- Summerland.CS.3[(which.min(Summerland.CS.3$cherry_model) + 1 ):nrow(Summerland.CS.3), ]
+    Summerland.CS.3_2 <-  data.frame(Summerland.CS.3_2, cherry_model_final=cumsum(Summerland.CS.3_2$cherry_model_raw))
+    Summerland.CS.3 <- merge(Summerland.CS.3, Summerland.CS.3_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.3 <- Summerland.CS.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.3$cherry_model_final[is.na(Summerland.CS.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.3 <- Summerland.CS.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.3$cherry_model_accumulated <- Summerland.CS.3$cherry_model_final
+Summerland.CS.3$cherry_model_final[Summerland.CS.3$cherry_model_final >= 1119] <- 1119
+
+# Season 4
+
+Summerland.CS.4 <- Summerland.CS.4 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.4 <- data.frame(Summerland.CS.4, cherry_model=cumsum(Summerland.CS.4$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.4[(which.min(Summerland.CS.4$cherry_model) + 1 ):nrow(Summerland.CS.4), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.4_2 <- Summerland.CS.4[(which.min(Summerland.CS.4$cherry_model) + 1 ):nrow(Summerland.CS.4), ]
+    Summerland.CS.4_2 <-  data.frame(Summerland.CS.4_2, cherry_model_final=cumsum(Summerland.CS.4_2$cherry_model_raw))
+    Summerland.CS.4 <- merge(Summerland.CS.4, Summerland.CS.4_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.4 <- Summerland.CS.4 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.4$cherry_model_final[is.na(Summerland.CS.4$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.4 <- Summerland.CS.4 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.4$cherry_model_accumulated <- Summerland.CS.4$cherry_model_final
+Summerland.CS.4$cherry_model_final[Summerland.CS.4$cherry_model_final >= 1119] <- 1119
+
+
+# Season 5
+
+Summerland.CS.5 <- Summerland.CS.5 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.5 <- data.frame(Summerland.CS.5, cherry_model=cumsum(Summerland.CS.5$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.5[(which.min(Summerland.CS.5$cherry_model) + 1 ):nrow(Summerland.CS.5), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.5_2 <- Summerland.CS.5[(which.min(Summerland.CS.5$cherry_model) + 1 ):nrow(Summerland.CS.5), ]
+    Summerland.CS.5_2 <-  data.frame(Summerland.CS.5_2, cherry_model_final=cumsum(Summerland.CS.5_2$cherry_model_raw))
+    Summerland.CS.5 <- merge(Summerland.CS.5, Summerland.CS.5_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.5 <- Summerland.CS.5 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.5$cherry_model_final[is.na(Summerland.CS.5$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.5 <- Summerland.CS.5 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.5$cherry_model_accumulated <- Summerland.CS.5$cherry_model_final
+Summerland.CS.5$cherry_model_final[Summerland.CS.5$cherry_model_final >= 1119] <- 1119
+
+# Season 6
+
+Summerland.CS.6 <- Summerland.CS.6 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.6 <- data.frame(Summerland.CS.6, cherry_model=cumsum(Summerland.CS.6$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.6[(which.min(Summerland.CS.6$cherry_model) + 1 ):nrow(Summerland.CS.6), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.6_2 <- Summerland.CS.6[(which.min(Summerland.CS.6$cherry_model) + 1 ):nrow(Summerland.CS.6), ]
+    Summerland.CS.6_2 <-  data.frame(Summerland.CS.6_2, cherry_model_final=cumsum(Summerland.CS.6_2$cherry_model_raw))
+    Summerland.CS.6 <- merge(Summerland.CS.6, Summerland.CS.6_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.6 <- Summerland.CS.6 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.6$cherry_model_final[is.na(Summerland.CS.6$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.6 <- Summerland.CS.6 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.6$cherry_model_accumulated <- Summerland.CS.6$cherry_model_final
+Summerland.CS.6$cherry_model_final[Summerland.CS.6$cherry_model_final >= 1119] <- 1119
+
+# Season 7
+
+Summerland.CS.7 <- Summerland.CS.7 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.7 <- data.frame(Summerland.CS.7, cherry_model=cumsum(Summerland.CS.7$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.7[(which.min(Summerland.CS.7$cherry_model) + 1 ):nrow(Summerland.CS.7), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.7_2 <- Summerland.CS.7[(which.min(Summerland.CS.7$cherry_model) + 1 ):nrow(Summerland.CS.7), ]
+    Summerland.CS.7_2 <-  data.frame(Summerland.CS.7_2, cherry_model_final=cumsum(Summerland.CS.7_2$cherry_model_raw))
+    Summerland.CS.7 <- merge(Summerland.CS.7, Summerland.CS.7_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.7 <- Summerland.CS.7 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.7$cherry_model_final[is.na(Summerland.CS.7$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.7 <- Summerland.CS.7 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.7$cherry_model_accumulated <- Summerland.CS.7$cherry_model_final
+Summerland.CS.7$cherry_model_final[Summerland.CS.7$cherry_model_final >= 1119] <- 1119
+
+
+# Season 8
+
+Summerland.CS.8 <- Summerland.CS.8 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.8 <- data.frame(Summerland.CS.8, cherry_model=cumsum(Summerland.CS.8$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.8[(which.min(Summerland.CS.8$cherry_model) + 1 ):nrow(Summerland.CS.8), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.8_2 <- Summerland.CS.8[(which.min(Summerland.CS.8$cherry_model) + 1 ):nrow(Summerland.CS.8), ]
+    Summerland.CS.8_2 <-  data.frame(Summerland.CS.8_2, cherry_model_final=cumsum(Summerland.CS.8_2$cherry_model_raw))
+    Summerland.CS.8 <- merge(Summerland.CS.8, Summerland.CS.8_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.8 <- Summerland.CS.8 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.8$cherry_model_final[is.na(Summerland.CS.8$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.8 <- Summerland.CS.8 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.8$cherry_model_accumulated <- Summerland.CS.8$cherry_model_final
+Summerland.CS.8$cherry_model_final[Summerland.CS.8$cherry_model_final >= 1119] <- 1119
+
+
+# Season 9
+
+Summerland.CS.9 <- Summerland.CS.9 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.9 <- data.frame(Summerland.CS.9, cherry_model=cumsum(Summerland.CS.9$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.9[(which.min(Summerland.CS.9$cherry_model) + 1 ):nrow(Summerland.CS.9), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.9_2 <- Summerland.CS.9[(which.min(Summerland.CS.9$cherry_model) + 1 ):nrow(Summerland.CS.9), ]
+    Summerland.CS.9_2 <-  data.frame(Summerland.CS.9_2, cherry_model_final=cumsum(Summerland.CS.9_2$cherry_model_raw))
+    Summerland.CS.9 <- merge(Summerland.CS.9, Summerland.CS.9_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.9 <- Summerland.CS.9 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.9$cherry_model_final[is.na(Summerland.CS.9$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.9 <- Summerland.CS.9 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.9$cherry_model_accumulated <- Summerland.CS.9$cherry_model_final
+Summerland.CS.9$cherry_model_final[Summerland.CS.9$cherry_model_final >= 1119] <- 1119
+
+
+# Season 10
+
+Summerland.CS.10 <- Summerland.CS.10 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.10 <- data.frame(Summerland.CS.10, cherry_model=cumsum(Summerland.CS.10$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.10[(which.min(Summerland.CS.10$cherry_model) + 1 ):nrow(Summerland.CS.10), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.10_2 <- Summerland.CS.10[(which.min(Summerland.CS.10$cherry_model) + 1 ):nrow(Summerland.CS.10), ]
+    Summerland.CS.10_2 <-  data.frame(Summerland.CS.10_2, cherry_model_final=cumsum(Summerland.CS.10_2$cherry_model_raw))
+    Summerland.CS.10 <- merge(Summerland.CS.10, Summerland.CS.10_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.10 <- Summerland.CS.10 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.10$cherry_model_final[is.na(Summerland.CS.10$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.10 <- Summerland.CS.10 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.10$cherry_model_accumulated <- Summerland.CS.10$cherry_model_final
+Summerland.CS.10$cherry_model_final[Summerland.CS.10$cherry_model_final >= 1119] <- 1119
+
+# Season 11
+
+Summerland.CS.11 <- Summerland.CS.11 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.11 <- data.frame(Summerland.CS.11, cherry_model=cumsum(Summerland.CS.11$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.11[(which.min(Summerland.CS.11$cherry_model) + 1 ):nrow(Summerland.CS.11), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.11_2 <- Summerland.CS.11[(which.min(Summerland.CS.11$cherry_model) + 1 ):nrow(Summerland.CS.11), ]
+    Summerland.CS.11_2 <-  data.frame(Summerland.CS.11_2, cherry_model_final=cumsum(Summerland.CS.11_2$cherry_model_raw))
+    Summerland.CS.11 <- merge(Summerland.CS.11, Summerland.CS.11_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.11 <- Summerland.CS.11 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.11$cherry_model_final[is.na(Summerland.CS.11$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.11 <- Summerland.CS.11 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.11$cherry_model_accumulated <- Summerland.CS.11$cherry_model_final
+Summerland.CS.1$cherry_model_final[Summerland.CS.1$cherry_model_final >= 1119] <- 1119
+
+# Season 12
+
+Summerland.CS.12 <- Summerland.CS.12 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.12 <- data.frame(Summerland.CS.12, cherry_model=cumsum(Summerland.CS.12$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.12[(which.min(Summerland.CS.12$cherry_model) + 1 ):nrow(Summerland.CS.12), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.12_2 <- Summerland.CS.12[(which.min(Summerland.CS.12$cherry_model) + 1 ):nrow(Summerland.CS.12), ]
+    Summerland.CS.12_2 <-  data.frame(Summerland.CS.12_2, cherry_model_final=cumsum(Summerland.CS.12_2$cherry_model_raw))
+    Summerland.CS.12 <- merge(Summerland.CS.12, Summerland.CS.12_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.12 <- Summerland.CS.12 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.12$cherry_model_final[is.na(Summerland.CS.12$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.12 <- Summerland.CS.12 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.12$cherry_model_accumulated <- Summerland.CS.12$cherry_model_final
+Summerland.CS.12$cherry_model_final[Summerland.CS.12$cherry_model_final >= 1119] <- 1119
+
+
+# Season 13
+
+Summerland.CS.13 <- Summerland.CS.13 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.13 <- data.frame(Summerland.CS.13, cherry_model=cumsum(Summerland.CS.13$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.13[(which.min(Summerland.CS.13$cherry_model) + 1 ):nrow(Summerland.CS.13), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.13_2 <- Summerland.CS.13[(which.min(Summerland.CS.13$cherry_model) + 1 ):nrow(Summerland.CS.13), ]
+    Summerland.CS.13_2 <-  data.frame(Summerland.CS.13_2, cherry_model_final=cumsum(Summerland.CS.13_2$cherry_model_raw))
+    Summerland.CS.13 <- merge(Summerland.CS.13, Summerland.CS.13_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.13 <- Summerland.CS.13 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.13$cherry_model_final[is.na(Summerland.CS.13$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.13 <- Summerland.CS.13 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.13$cherry_model_accumulated <- Summerland.CS.13$cherry_model_final
+Summerland.CS.13$cherry_model_final[Summerland.CS.13$cherry_model_final >= 1119] <- 1119
+
+# Season 14
+
+Summerland.CS.14 <- Summerland.CS.14 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Summerland.CS.14 <- data.frame(Summerland.CS.14, cherry_model=cumsum(Summerland.CS.14$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Summerland.CS.14[(which.min(Summerland.CS.14$cherry_model) + 1 ):nrow(Summerland.CS.14), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Summerland.CS.14_2 <- Summerland.CS.14[(which.min(Summerland.CS.14$cherry_model) + 1 ):nrow(Summerland.CS.14), ]
+    Summerland.CS.14_2 <-  data.frame(Summerland.CS.14_2, cherry_model_final=cumsum(Summerland.CS.14_2$cherry_model_raw))
+    Summerland.CS.14 <- merge(Summerland.CS.14, Summerland.CS.14_2, by = c("Date", "Year", "Month", "Day", "Time","Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Summerland.CS.14 <- Summerland.CS.14 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Summerland.CS.14$cherry_model_final[is.na(Summerland.CS.14$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Summerland.CS.14 <- Summerland.CS.14 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Summerland.CS.14$cherry_model_accumulated <- Summerland.CS.14$cherry_model_final
+Summerland.CS.14$cherry_model_final[Summerland.CS.14$cherry_model_final >= 1119] <- 1119
+```
+
+# 3.1 Calculate CU - Coldstream
+```{R}
+Coldstream.1 <- subset(Coldstream, Date >= '2019-08-01' & Date <= '2020-04-30')
+Coldstream.2 <- subset(Coldstream, Date >= '2020-08-01' & Date <= '2021-04-30')
+Coldstream.3 <- subset(Coldstream, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Coldstream.1 <- Coldstream.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Coldstream.1 <- data.frame(Coldstream.1, cherry_model=cumsum(Coldstream.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Coldstream.1[(which.min(Coldstream.1$cherry_model) + 1 ):nrow(Coldstream.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Coldstream.1_2 <- Coldstream.1[(which.min(Coldstream.1$cherry_model) + 1 ):nrow(Coldstream.1), ]
+    Coldstream.1_2 <-  data.frame(Coldstream.1_2, cherry_model_final=cumsum(Coldstream.1_2$cherry_model_raw))
+    Coldstream.1 <- merge(Coldstream.1, Coldstream.1_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Coldstream.1 <- Coldstream.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Coldstream.1$cherry_model_final[is.na(Coldstream.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Coldstream.1 <- Coldstream.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Coldstream.1$cherry_model_accumulated <- Coldstream.1$cherry_model_final
+Coldstream.1$cherry_model_final[Coldstream.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Coldstream.2 <- Coldstream.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Coldstream.2 <- data.frame(Coldstream.2, cherry_model=cumsum(Coldstream.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Coldstream.2[(which.min(Coldstream.2$cherry_model) + 1 ):nrow(Coldstream.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Coldstream.2_2 <- Coldstream.2[(which.min(Coldstream.2$cherry_model) + 1 ):nrow(Coldstream.2), ]
+    Coldstream.2_2 <-  data.frame(Coldstream.2_2, cherry_model_final=cumsum(Coldstream.2_2$cherry_model_raw))
+    Coldstream.2 <- merge(Coldstream.2, Coldstream.2_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Coldstream.2 <- Coldstream.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Coldstream.2$cherry_model_final[is.na(Coldstream.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Coldstream.2 <- Coldstream.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Coldstream.2$cherry_model_accumulated <- Coldstream.2$cherry_model_final
+Coldstream.2$cherry_model_final[Coldstream.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Coldstream.3 <- Coldstream.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Coldstream.3 <- data.frame(Coldstream.3, cherry_model=cumsum(Coldstream.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Coldstream.3[(which.min(Coldstream.3$cherry_model) + 1 ):nrow(Coldstream.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Coldstream.3_2 <- Coldstream.3[(which.min(Coldstream.3$cherry_model) + 1 ):nrow(Coldstream.3), ]
+    Coldstream.3_2 <-  data.frame(Coldstream.3_2, cherry_model_final=cumsum(Coldstream.3_2$cherry_model_raw))
+    Coldstream.3 <- merge(Coldstream.3, Coldstream.3_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Coldstream.3 <- Coldstream.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Coldstream.3$cherry_model_final[is.na(Coldstream.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Coldstream.3 <- Coldstream.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Coldstream.3$cherry_model_accumulated <- Coldstream.3$cherry_model_final
+Coldstream.3$cherry_model_final[Coldstream.3$cherry_model_final >= 1119] <- 1119
+
+```
+
+# 3.1 Calculate CU - Belgo
+```{R}
+Belgo.1 <- subset(Belgo, Date >= '2019-08-01' & Date <= '2020-04-30')
+Belgo.2 <- subset(Belgo, Date >= '2020-08-01' & Date <= '2021-04-30')
+Belgo.3 <- subset(Belgo, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Belgo.1 <- Belgo.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Belgo.1 <- data.frame(Belgo.1, cherry_model=cumsum(Belgo.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Belgo.1[(which.min(Belgo.1$cherry_model) + 1 ):nrow(Belgo.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Belgo.1_2 <- Belgo.1[(which.min(Belgo.1$cherry_model) + 1 ):nrow(Belgo.1), ]
+    Belgo.1_2 <-  data.frame(Belgo.1_2, cherry_model_final=cumsum(Belgo.1_2$cherry_model_raw))
+    Belgo.1 <- merge(Belgo.1, Belgo.1_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Belgo.1 <- Belgo.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Belgo.1$cherry_model_final[is.na(Belgo.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Belgo.1 <- Belgo.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Belgo.1$cherry_model_accumulated <- Belgo.1$cherry_model_final
+Belgo.1$cherry_model_final[Belgo.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Belgo.2 <- Belgo.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Belgo.2 <- data.frame(Belgo.2, cherry_model=cumsum(Belgo.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Belgo.2[(which.min(Belgo.2$cherry_model) + 1 ):nrow(Belgo.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Belgo.2_2 <- Belgo.2[(which.min(Belgo.2$cherry_model) + 1 ):nrow(Belgo.2), ]
+    Belgo.2_2 <-  data.frame(Belgo.2_2, cherry_model_final=cumsum(Belgo.2_2$cherry_model_raw))
+    Belgo.2 <- merge(Belgo.2, Belgo.2_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Belgo.2 <- Belgo.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Belgo.2$cherry_model_final[is.na(Belgo.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Belgo.2 <- Belgo.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Belgo.2$cherry_model_accumulated <- Belgo.2$cherry_model_final
+Belgo.2$cherry_model_final[Belgo.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Belgo.3 <- Belgo.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Belgo.3 <- data.frame(Belgo.3, cherry_model=cumsum(Belgo.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Belgo.3[(which.min(Belgo.3$cherry_model) + 1 ):nrow(Belgo.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Belgo.3_2 <- Belgo.3[(which.min(Belgo.3$cherry_model) + 1 ):nrow(Belgo.3), ]
+    Belgo.3_2 <-  data.frame(Belgo.3_2, cherry_model_final=cumsum(Belgo.3_2$cherry_model_raw))
+    Belgo.3 <- merge(Belgo.3, Belgo.3_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Belgo.3 <- Belgo.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Belgo.3$cherry_model_final[is.na(Belgo.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Belgo.3 <- Belgo.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Belgo.3$cherry_model_accumulated <- Belgo.3$cherry_model_final
+Belgo.3$cherry_model_final[Belgo.3$cherry_model_final >= 1119] <- 1119
+
+```
+
+# 3.1 Calculate CU - Savanna
+```{R}
+Savanna.1 <- subset(Savanna, Date >= '2019-08-01' & Date <= '2020-04-30')
+Savanna.2 <- subset(Savanna, Date >= '2020-08-01' & Date <= '2021-04-30')
+Savanna.3 <- subset(Savanna, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Savanna.1 <- Savanna.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Savanna.1 <- data.frame(Savanna.1, cherry_model=cumsum(Savanna.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Savanna.1[(which.min(Savanna.1$cherry_model) + 1 ):nrow(Savanna.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Savanna.1_2 <- Savanna.1[(which.min(Savanna.1$cherry_model) + 1 ):nrow(Savanna.1), ]
+    Savanna.1_2 <-  data.frame(Savanna.1_2, cherry_model_final=cumsum(Savanna.1_2$cherry_model_raw))
+    Savanna.1 <- merge(Savanna.1, Savanna.1_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Savanna.1 <- Savanna.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Savanna.1$cherry_model_final[is.na(Savanna.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Savanna.1 <- Savanna.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Savanna.1$cherry_model_accumulated <- Savanna.1$cherry_model_final
+Savanna.1$cherry_model_final[Savanna.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Savanna.2 <- Savanna.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Savanna.2 <- data.frame(Savanna.2, cherry_model=cumsum(Savanna.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Savanna.2[(which.min(Savanna.2$cherry_model) + 1 ):nrow(Savanna.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Savanna.2_2 <- Savanna.2[(which.min(Savanna.2$cherry_model) + 1 ):nrow(Savanna.2), ]
+    Savanna.2_2 <-  data.frame(Savanna.2_2, cherry_model_final=cumsum(Savanna.2_2$cherry_model_raw))
+    Savanna.2 <- merge(Savanna.2, Savanna.2_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Savanna.2 <- Savanna.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Savanna.2$cherry_model_final[is.na(Savanna.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Savanna.2 <- Savanna.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Savanna.2$cherry_model_accumulated <- Savanna.2$cherry_model_final
+Savanna.2$cherry_model_final[Savanna.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Savanna.3 <- Savanna.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Savanna.3 <- data.frame(Savanna.3, cherry_model=cumsum(Savanna.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Savanna.3[(which.min(Savanna.3$cherry_model) + 1 ):nrow(Savanna.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Savanna.3_2 <- Savanna.3[(which.min(Savanna.3$cherry_model) + 1 ):nrow(Savanna.3), ]
+    Savanna.3_2 <-  data.frame(Savanna.3_2, cherry_model_final=cumsum(Savanna.3_2$cherry_model_raw))
+    Savanna.3 <- merge(Savanna.3, Savanna.3_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Savanna.3 <- Savanna.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Savanna.3$cherry_model_final[is.na(Savanna.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Savanna.3 <- Savanna.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Savanna.3$cherry_model_accumulated <- Savanna.3$cherry_model_final
+Savanna.3$cherry_model_final[Savanna.3$cherry_model_final >= 1119] <- 1119
+
+```
+
+# 3.1 Calculate CU - Martens
+```{R}
+Martens.1 <- subset(Martens, Date >= '2019-08-01' & Date <= '2020-04-30')
+Martens.2 <- subset(Martens, Date >= '2020-08-01' & Date <= '2021-04-30')
+Martens.3 <- subset(Martens, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Martens.1 <- Martens.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Martens.1 <- data.frame(Martens.1, cherry_model=cumsum(Martens.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Martens.1[(which.min(Martens.1$cherry_model) + 1 ):nrow(Martens.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Martens.1_2 <- Martens.1[(which.min(Martens.1$cherry_model) + 1 ):nrow(Martens.1), ]
+    Martens.1_2 <-  data.frame(Martens.1_2, cherry_model_final=cumsum(Martens.1_2$cherry_model_raw))
+    Martens.1 <- merge(Martens.1, Martens.1_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Martens.1 <- Martens.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Martens.1$cherry_model_final[is.na(Martens.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Martens.1 <- Martens.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Martens.1$cherry_model_accumulated <- Martens.1$cherry_model_final
+Martens.1$cherry_model_final[Martens.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Martens.2 <- Martens.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Martens.2 <- data.frame(Martens.2, cherry_model=cumsum(Martens.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Martens.2[(which.min(Martens.2$cherry_model) + 1 ):nrow(Martens.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Martens.2_2 <- Martens.2[(which.min(Martens.2$cherry_model) + 1 ):nrow(Martens.2), ]
+    Martens.2_2 <-  data.frame(Martens.2_2, cherry_model_final=cumsum(Martens.2_2$cherry_model_raw))
+    Martens.2 <- merge(Martens.2, Martens.2_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Martens.2 <- Martens.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Martens.2$cherry_model_final[is.na(Martens.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Martens.2 <- Martens.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Martens.2$cherry_model_accumulated <- Martens.2$cherry_model_final
+Martens.2$cherry_model_final[Martens.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Martens.3 <- Martens.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Martens.3 <- data.frame(Martens.3, cherry_model=cumsum(Martens.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Martens.3[(which.min(Martens.3$cherry_model) + 1 ):nrow(Martens.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Martens.3_2 <- Martens.3[(which.min(Martens.3$cherry_model) + 1 ):nrow(Martens.3), ]
+    Martens.3_2 <-  data.frame(Martens.3_2, cherry_model_final=cumsum(Martens.3_2$cherry_model_raw))
+    Martens.3 <- merge(Martens.3, Martens.3_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Martens.3 <- Martens.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Martens.3$cherry_model_final[is.na(Martens.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Martens.3 <- Martens.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Martens.3$cherry_model_accumulated <- Martens.3$cherry_model_final
+Martens.3$cherry_model_final[Martens.3$cherry_model_final >= 1119] <- 1119
+
+```
+
+# 3.1 Calculate CU - Slater
+```{R}
+Slater.1 <- subset(Slater, Date >= '2019-08-01' & Date <= '2020-04-30')
+Slater.2 <- subset(Slater, Date >= '2020-08-01' & Date <= '2021-04-30')
+Slater.3 <- subset(Slater, Date >= '2021-08-01' & Date <= '2022-04-30')
+
+# Season 1
+
+Slater.1 <- Slater.1 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Slater.1 <- data.frame(Slater.1, cherry_model=cumsum(Slater.1$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Slater.1[(which.min(Slater.1$cherry_model) + 1 ):nrow(Slater.1), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Slater.1_2 <- Slater.1[(which.min(Slater.1$cherry_model) + 1 ):nrow(Slater.1), ]
+    Slater.1_2 <-  data.frame(Slater.1_2, cherry_model_final=cumsum(Slater.1_2$cherry_model_raw))
+    Slater.1 <- merge(Slater.1, Slater.1_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Slater.1 <- Slater.1 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Slater.1$cherry_model_final[is.na(Slater.1$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Slater.1 <- Slater.1 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Slater.1$cherry_model_accumulated <- Slater.1$cherry_model_final
+Slater.1$cherry_model_final[Slater.1$cherry_model_final >= 1119] <- 1119
+
+# Season 2
+
+Slater.2 <- Slater.2 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Slater.2 <- data.frame(Slater.2, cherry_model=cumsum(Slater.2$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Slater.2[(which.min(Slater.2$cherry_model) + 1 ):nrow(Slater.2), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Slater.2_2 <- Slater.2[(which.min(Slater.2$cherry_model) + 1 ):nrow(Slater.2), ]
+    Slater.2_2 <-  data.frame(Slater.2_2, cherry_model_final=cumsum(Slater.2_2$cherry_model_raw))
+    Slater.2 <- merge(Slater.2, Slater.2_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Slater.2 <- Slater.2 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Slater.2$cherry_model_final[is.na(Slater.2$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Slater.2 <- Slater.2 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Slater.2$cherry_model_accumulated <- Slater.2$cherry_model_final
+Slater.2$cherry_model_final[Slater.2$cherry_model_final >= 1119] <- 1119
+
+# Season 3
+
+Slater.3 <- Slater.3 %>% mutate(cherry_model_raw = case_when(Temp < -2 ~ 0,
+                               Temp >= 18 ~ -1,
+                               Temp >= 16 & Temp < 18 ~ -0.5,
+                               Temp < 16 & Temp >= -2 ~
+                                 1-((46.8012*exp(-exp(-(Temp-9.8275)/2.1401)))/42.80757)))
+
+# Make a new column (Sweetheart_cherry_model) that is the accumulation of all the calculated chill units
+
+Slater.3 <- data.frame(Slater.3, cherry_model=cumsum(Slater.3$cherry_model_raw))
+
+# Chill inception was found by determining when the accumulated chill units are reach a minimum, and at this time chill accumulation is set to zero, start accumulating chill the day after the minimum value is reached
+      # Anything after the minimum Sweetheart_cherry_model value (accumulated chill units), assign the accumulated chill units (Sweetheart_cherry_model),   everything before assign 0
+      # If the length of the data frame when selecting for values after the minimum Sweetheart_cherry_model value is greater than 0, assign      Sweetheart_cherry_model_final to be the cumulative sum of CU, if it is shorter than 1, assign Sweetheart_cherry_model_final a value of zero
+
+if (nrow(Slater.3[(which.min(Slater.3$cherry_model) + 1 ):nrow(Slater.3), ]) > 1){ # I THINK YOU CAN REMOVE THE + 1 HERE
+    Slater.3_2 <- Slater.3[(which.min(Slater.3$cherry_model) + 1 ):nrow(Slater.3), ]
+    Slater.3_2 <-  data.frame(Slater.3_2, cherry_model_final=cumsum(Slater.3_2$cherry_model_raw))
+    Slater.3 <- merge(Slater.3, Slater.3_2, by = c("Date", "Year", "Month", "Day", "Hour", "Site", "Temp", "cherry_model_raw", "cherry_model"), all = TRUE) # these columns need to be exactly the columns in your data fame in order to run properly (no extras, no less) add SITE for temp dataframes with site
+  } else {
+  Slater.3 <- Slater.3 %>% dplyr::mutate(cherry_model_final = 0)
+  }
+
+# Neilsen et al. 2015 determined that approximately 1119 accumulated chilling units are optimal for Sweetheart
+
+# Add column for sweetheart chill accumulation completion
+
+# if chill units have not yet started accumulating, assign value of zero
+Slater.3$cherry_model_final[is.na(Slater.3$cherry_model_final)] <- 0
+
+# create new column to indicate optimal forcing units, column Sweetheart_cherry_model (FU < 1119, assign 0, FU >= 1119, assign 1)
+Slater.3 <- Slater.3 %>% dplyr::mutate(Sweetheart_cherry_model = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1))
+
+# We will assign any accumulated forcing unit over 1119 the value of 1119 as optimal chill has been accumulated by this point and forcing accumulation begins (but will save this column as cherry_model_accumulated so that we have access to the accumulated chill as well)
+Slater.3$cherry_model_accumulated <- Slater.3$cherry_model_final
+Slater.3$cherry_model_final[Slater.3$cherry_model_final >= 1119] <- 1119
+
+```
+
+* * *
+# 4.0 Calculate FU
+
+# 4.1 Calculate FU - Summerland CS
+```{R}
+
+# Season 1
+Summerland.CS.1 <- Summerland.CS.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.1$Sweetheart_cherry_forcingBB[Summerland.CS.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.1 <-  data.frame(Summerland.CS.1, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.1$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.1 <- Summerland.CS.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Summerland.CS.2 <- Summerland.CS.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.2$Sweetheart_cherry_forcingBB[Summerland.CS.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.2 <-  data.frame(Summerland.CS.2, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.2$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.2 <- Summerland.CS.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Summerland.CS.3 <- Summerland.CS.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.3$Sweetheart_cherry_forcingBB[Summerland.CS.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.3 <-  data.frame(Summerland.CS.3, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.3$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.3 <- Summerland.CS.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 4
+Summerland.CS.4 <- Summerland.CS.4 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.4$Sweetheart_cherry_forcingBB[Summerland.CS.4$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.4 <-  data.frame(Summerland.CS.4, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.4$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.4$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.4$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.4 <- Summerland.CS.4 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 5
+Summerland.CS.5 <- Summerland.CS.5 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.5$Sweetheart_cherry_forcingBB[Summerland.CS.5$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.5 <-  data.frame(Summerland.CS.5, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.5$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.5$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.5$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.5 <- Summerland.CS.5 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 6
+Summerland.CS.6 <- Summerland.CS.6 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.6$Sweetheart_cherry_forcingBB[Summerland.CS.6$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.6 <-  data.frame(Summerland.CS.6, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.6$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.6$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.6$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.6 <- Summerland.CS.6 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 7
+Summerland.CS.7 <- Summerland.CS.7 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.7$Sweetheart_cherry_forcingBB[Summerland.CS.7$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.7 <-  data.frame(Summerland.CS.7, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.7$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.7$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.7$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.7 <- Summerland.CS.7 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 8
+Summerland.CS.8 <- Summerland.CS.8 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.8$Sweetheart_cherry_forcingBB[Summerland.CS.8$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.8 <-  data.frame(Summerland.CS.8, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.8$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.8$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.8$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.8 <- Summerland.CS.8 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 9
+Summerland.CS.9 <- Summerland.CS.9 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.9$Sweetheart_cherry_forcingBB[Summerland.CS.9$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.9 <-  data.frame(Summerland.CS.9, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.9$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.9$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.9$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.9 <- Summerland.CS.9 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 10
+Summerland.CS.10 <- Summerland.CS.10 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.10$Sweetheart_cherry_forcingBB[Summerland.CS.10$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.10 <-  data.frame(Summerland.CS.10, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.10$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.10$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.10$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.10 <- Summerland.CS.10 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 11
+Summerland.CS.11 <- Summerland.CS.11 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.11$Sweetheart_cherry_forcingBB[Summerland.CS.11$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.11 <-  data.frame(Summerland.CS.11, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.11$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.11$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.11$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.11 <- Summerland.CS.11 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+
+# Season 12
+Summerland.CS.12 <- Summerland.CS.12 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.12$Sweetheart_cherry_forcingBB[Summerland.CS.12$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.12 <-  data.frame(Summerland.CS.12, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.12$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.12$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.12$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.12 <- Summerland.CS.12 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 13
+Summerland.CS.13 <- Summerland.CS.13 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.13$Sweetheart_cherry_forcingBB[Summerland.CS.13$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.13 <-  data.frame(Summerland.CS.13, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.13$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.13$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.13$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.13 <- Summerland.CS.13 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 14
+Summerland.CS.14 <- Summerland.CS.14 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Summerland.CS.14$Sweetheart_cherry_forcingBB[Summerland.CS.14$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Summerland.CS.14 <-  data.frame(Summerland.CS.14, Sweetheart_cherry_forcingBB_final=cumsum(Summerland.CS.14$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Summerland.CS.14$Sweetheart_cherry_forcingBB_final_log <- log(Summerland.CS.14$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Summerland.CS.14 <- Summerland.CS.14 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+# 4.2 Calculate FU - Coldstream
+```{R}
+
+# Season 1
+Coldstream.1 <- Coldstream.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Coldstream.1$Sweetheart_cherry_forcingBB[Coldstream.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Coldstream.1 <-  data.frame(Coldstream.1, Sweetheart_cherry_forcingBB_final=cumsum(Coldstream.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Coldstream.1$Sweetheart_cherry_forcingBB_final_log <- log(Coldstream.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Coldstream.1 <- Coldstream.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Coldstream.2 <- Coldstream.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Coldstream.2$Sweetheart_cherry_forcingBB[Coldstream.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Coldstream.2 <-  data.frame(Coldstream.2, Sweetheart_cherry_forcingBB_final=cumsum(Coldstream.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Coldstream.2$Sweetheart_cherry_forcingBB_final_log <- log(Coldstream.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Coldstream.2 <- Coldstream.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Coldstream.3 <- Coldstream.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Coldstream.3$Sweetheart_cherry_forcingBB[Coldstream.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Coldstream.3 <-  data.frame(Coldstream.3, Sweetheart_cherry_forcingBB_final=cumsum(Coldstream.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Coldstream.3$Sweetheart_cherry_forcingBB_final_log <- log(Coldstream.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Coldstream.3 <- Coldstream.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+# 4.3 Calculate FU - Belgo
+```{R}
+
+# Season 1
+Belgo.1 <- Belgo.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Belgo.1$Sweetheart_cherry_forcingBB[Belgo.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Belgo.1 <-  data.frame(Belgo.1, Sweetheart_cherry_forcingBB_final=cumsum(Belgo.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Belgo.1$Sweetheart_cherry_forcingBB_final_log <- log(Belgo.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Belgo.1 <- Belgo.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Belgo.2 <- Belgo.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Belgo.2$Sweetheart_cherry_forcingBB[Belgo.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Belgo.2 <-  data.frame(Belgo.2, Sweetheart_cherry_forcingBB_final=cumsum(Belgo.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Belgo.2$Sweetheart_cherry_forcingBB_final_log <- log(Belgo.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Belgo.2 <- Belgo.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Belgo.3 <- Belgo.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Belgo.3$Sweetheart_cherry_forcingBB[Belgo.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Belgo.3 <-  data.frame(Belgo.3, Sweetheart_cherry_forcingBB_final=cumsum(Belgo.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Belgo.3$Sweetheart_cherry_forcingBB_final_log <- log(Belgo.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Belgo.3 <- Belgo.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+# 4.4 Calculate FU - Savanna
+```{R}
+
+# Season 1
+Savanna.1 <- Savanna.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Savanna.1$Sweetheart_cherry_forcingBB[Savanna.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Savanna.1 <-  data.frame(Savanna.1, Sweetheart_cherry_forcingBB_final=cumsum(Savanna.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Savanna.1$Sweetheart_cherry_forcingBB_final_log <- log(Savanna.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Savanna.1 <- Savanna.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Savanna.2 <- Savanna.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Savanna.2$Sweetheart_cherry_forcingBB[Savanna.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Savanna.2 <-  data.frame(Savanna.2, Sweetheart_cherry_forcingBB_final=cumsum(Savanna.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Savanna.2$Sweetheart_cherry_forcingBB_final_log <- log(Savanna.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Savanna.2 <- Savanna.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Savanna.3 <- Savanna.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Savanna.3$Sweetheart_cherry_forcingBB[Savanna.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Savanna.3 <-  data.frame(Savanna.3, Sweetheart_cherry_forcingBB_final=cumsum(Savanna.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Savanna.3$Sweetheart_cherry_forcingBB_final_log <- log(Savanna.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Savanna.3 <- Savanna.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+# 4.5 Calculate FU - Martens
+```{R}
+
+# Season 1
+Martens.1 <- Martens.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Martens.1$Sweetheart_cherry_forcingBB[Martens.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Martens.1 <-  data.frame(Martens.1, Sweetheart_cherry_forcingBB_final=cumsum(Martens.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Martens.1$Sweetheart_cherry_forcingBB_final_log <- log(Martens.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Martens.1 <- Martens.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Martens.2 <- Martens.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Martens.2$Sweetheart_cherry_forcingBB[Martens.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Martens.2 <-  data.frame(Martens.2, Sweetheart_cherry_forcingBB_final=cumsum(Martens.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Martens.2$Sweetheart_cherry_forcingBB_final_log <- log(Martens.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Martens.2 <- Martens.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Martens.3 <- Martens.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Martens.3$Sweetheart_cherry_forcingBB[Martens.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Martens.3 <-  data.frame(Martens.3, Sweetheart_cherry_forcingBB_final=cumsum(Martens.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Martens.3$Sweetheart_cherry_forcingBB_final_log <- log(Martens.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Martens.3 <- Martens.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+# 4.6 Calculate FU - Slater
+```{R}
+
+# Season 1
+Slater.1 <- Slater.1 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Slater.1$Sweetheart_cherry_forcingBB[Slater.1$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Slater.1 <-  data.frame(Slater.1, Sweetheart_cherry_forcingBB_final=cumsum(Slater.1$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Slater.1$Sweetheart_cherry_forcingBB_final_log <- log(Slater.1$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Slater.1 <- Slater.1 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 2
+Slater.2 <- Slater.2 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Slater.2$Sweetheart_cherry_forcingBB[Slater.2$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Slater.2 <-  data.frame(Slater.2, Sweetheart_cherry_forcingBB_final=cumsum(Slater.2$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Slater.2$Sweetheart_cherry_forcingBB_final_log <- log(Slater.2$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Slater.2 <- Slater.2 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+
+# Season 3
+Slater.3 <- Slater.3 %>% dplyr::mutate(Sweetheart_cherry_forcingBB = case_when(Temp < 5 ~ 0,
+                                                                  Temp >= 5 ~ 1.5/(1+exp(-(Temp-22.8)/5.7))))
+
+# If Sweetheart_cherry_model = 0 (FU < 1119) assign all Sweetheart_cherry_forcingBB to zero
+Slater.3$Sweetheart_cherry_forcingBB[Slater.3$Sweetheart_cherry_model == '0'] <- 0
+
+# determine the accumulated values for the forcing units
+Slater.3 <-  data.frame(Slater.3, Sweetheart_cherry_forcingBB_final=cumsum(Slater.3$Sweetheart_cherry_forcingBB))
+
+# We will also be working with log transform chilling units
+Slater.3$Sweetheart_cherry_forcingBB_final_log <- log(Slater.3$Sweetheart_cherry_forcingBB_final + 10)
+
+# Neilsen et al. 2015 determined that once approximately 68 forcing units (calculated using bud break coefficients) were accumulated, bud break will occur
+# create column for forcing units not yet accumulating (CU < 1119, assign 0), forcing units accumulating (CU >=1119, assign 1), and forcing units complete (FU >=68, assign 2)
+
+Slater.3 <- Slater.3 %>% dplyr::mutate(Sweetheart_cherry_model_forcingBB = case_when(cherry_model_final < 1119 ~ 0, cherry_model_final >= 1119 ~ 1, Sweetheart_cherry_forcingBB_final >= 68 ~ 2))
+```
+
+* * *
+# Merge them all back together into dataframes
+```{r}
+Summerland.CS <- rbind (Summerland.CS.1, Summerland.CS.2, Summerland.CS.3, Summerland.CS.4,
+                        Summerland.CS.5, Summerland.CS.6, Summerland.CS.7, Summerland.CS.8,
+                        Summerland.CS.9, Summerland.CS.10, Summerland.CS.11, Summerland.CS.12, 
+                        Summerland.CS.13, Summerland.CS.14)
+
+Coldstream <- rbind(Coldstream.1, Coldstream.2, Coldstream.3)
+Coldstream <- Coldstream %>% 
+  rename(Time = Hour)
+
+Belgo <- rbind(Belgo.1, Belgo.2, Belgo.3)
+Belgo <- Belgo %>% 
+  rename(Time = Hour)
+
+Savanna <- rbind(Savanna.1, Savanna.2, Savanna.3)
+Savanna <- Savanna %>% 
+  rename(Time = Hour)
+
+Martens <- rbind(Martens.1, Martens.2, Martens.3)
+Martens <- Martens %>% 
+  rename(Time = Hour)
+
+Slater <- rbind(Slater.1, Slater.2, Slater.3)
+Slater <- Slater %>% 
+  rename(Time = Hour)
+```
+
+* * *
+# Bring to daily resolution and round to 4 decimal place
+```{r}
+# Drop temp because it is the temp at noon only
+Summerland.CS_daily <- Summerland.CS %>% 
+  dplyr::filter(Time == "12:00:00" | Time == "12:00" )
+Summerland.CS_daily <- Summerland.CS_daily %>% mutate_if(is.numeric, ~round(., 4))
+Summerland.CS_daily = subset(Summerland.CS_daily, select = -c(Temp))
+
+Coldstream_daily <- Coldstream %>% 
+  dplyr::filter(Time == "12:00:00")
+Coldstream_daily <- Coldstream_daily %>% mutate_if(is.numeric, ~round(., 4))
+Coldstream_daily = subset(Coldstream_daily, select = -c(Temp))
+
+Belgo_daily <- Belgo %>% 
+  dplyr::filter(Time == "12:00:00")
+Belgo_daily <- Belgo_daily %>% mutate_if(is.numeric, ~round(., 4))
+Belgo_daily = subset(Belgo_daily, select = -c(Temp))
+
+Savanna_daily <- Savanna %>% 
+  dplyr::filter(Time == "12:00:00")
+Savanna_daily <- Savanna_daily %>% mutate_if(is.numeric, ~round(., 4))
+Savanna_daily = subset(Savanna_daily, select = -c(Temp))
+
+Martens_daily <- Martens %>% 
+  dplyr::filter(Time == "12:00:00")
+Martens_daily <- Martens_daily %>% mutate_if(is.numeric, ~round(., 4))
+Martens_daily = subset(Martens_daily, select = -c(Temp))
+
+Slater_daily <- Slater %>% 
+  dplyr::filter(Time == "12:00:00")
+Slater_daily <- Slater_daily %>% mutate_if(is.numeric, ~round(., 4))
+Slater_daily = subset(Slater_daily, select = -c(Temp))
+```
+
+* * *
+# Add in LT data and temperature lags from old calculations SWEETHEART
+```{r}
+# Summerland.CS
+Sweetheart_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/Sweetheart_final_CUFU_CH.csv')
+Sweetheart_final_CUFU_CH$Date <- as.Date(Sweetheart_final_CUFU_CH$Date)
+
+# drop old values
+Sweetheart_final_CUFU_CH = subset(Sweetheart_final_CUFU_CH, select = -c(X, cherry_model_final, 
+                                                                        Sweetheart_cherry_model, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_model_forcingBB,
+                                                                        Sweetheart_cherry_forcingBB_final_log))
+Summerland.CS.final <- merge(Sweetheart_final_CUFU_CH, Summerland.CS_daily, by = c('Date', 'Year', 'Month', 'Day', 'Time'))
+
+# Savanna
+Savanna_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/Savanna_Temp_CUFU_CH.csv')
+Savanna_final_CUFU_CH$Date <- as.Date(Savanna_final_CUFU_CH$Date)
+
+# drop old values
+Savanna_final_CUFU_CH = subset(Savanna_final_CUFU_CH, select = -c(X, cherry_model_final, 
+                                                                        Sweetheart_cherry_model, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_model_forcingBB,
+                                                                        Sweetheart_cherry_forcingBB_final_log))
+Savanna.final <- merge(Savanna_final_CUFU_CH, Savanna_daily, by = c('Date', 'Year', 'Month', 'Day', 'Time', 'Site'))
+
+# Martens
+Martens_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/Martens_Temp_CUFU_CH.csv')
+Martens_final_CUFU_CH$Date <- as.Date(Martens_final_CUFU_CH$Date)
+
+# drop old values
+Martens_final_CUFU_CH = subset(Martens_final_CUFU_CH, select = -c(X, cherry_model_final, 
+                                                                        Sweetheart_cherry_model, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_model_forcingBB,
+                                                                        Sweetheart_cherry_forcingBB_final_log))
+Martens.final <- merge(Martens_final_CUFU_CH, Martens_daily, by = c('Date', 'Year', 'Month', 'Day', 'Time', 'Site'))
+
+
+# Slater
+Slater_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/Slater_Temp_CUFU_CH.csv')
+Slater_final_CUFU_CH$Date <- as.Date(Slater_final_CUFU_CH$Date)
+
+# drop old values
+Slater_final_CUFU_CH = subset(Slater_final_CUFU_CH, select = -c(X, cherry_model_final, 
+                                                                        Sweetheart_cherry_model, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_model_forcingBB,
+                                                                        Sweetheart_cherry_forcingBB_final_log))
+Slater.final <- merge(Slater_final_CUFU_CH, Slater_daily, by = c('Date', 'Year', 'Month', 'Day', 'Time', 'Site'))
+
+
+```
+
+* * *
+# Add in LT data and temperature lags from old calculations LAPINS
+```{r}
+# Summerland.CS
+Lapins_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/Lapins_final_CUFU_CH.csv')
+Lapins_final_CUFU_CH$Date <- as.Date(Lapins_final_CUFU_CH$Date)
+
+# drop old values
+Lapins_final_CUFU_CH = subset(Lapins_final_CUFU_CH, select = -c(X, cherry_model_final, 
+                                                                        Sweetheart_cherry_model, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_model_forcingBB))
+Lapins.final <- merge(Lapins_final_CUFU_CH, Summerland.CS_daily, by = c('Date', 'Year', 'Month', 'Day', 'Time'))
+```
+
+* * *
+# Add in LT data and temperature lags from old calculations OTHER VARIETIES
+```{r}
+# Other Varieties
+OV_final_CUFU_CH <- read.csv(file='/Users/Elizabeth/Desktop/Model_final2023/Sweetheart_final/old_CU_FU_calculations/OtherVarieties.csv')
+OV_final_CUFU_CH$Date <- as.Date(OV_final_CUFU_CH$Date)
+Summerland.CS_daily$Date <- as.Date(Summerland.CS_daily$Date)
+
+# drop old values
+OV_final_CUFU_CH = subset(OV_final_CUFU_CH, select = -c(cherry_model_final, 
+                                                                        cherry_model_final, 
+                                                                        Sweetheart_cherry_forcingBB_final,
+                                                                        Sweetheart_cherry_forcingBB_final_log))
+OV.final <- merge(OV_final_CUFU_CH, Summerland.CS_daily, by = c('Date'))
+```
+
+* * *
+# Export to CSV
+```{r}
+write.csv(Summerland.CS.final, file = "./Summerland_Sweetheart_final_CUFU_LT_2023.csv", row.names = FALSE)
+write.csv(Lapins.final, file = "./Summerland_Lapins_final_CUFU_LT_2023.csv", row.names = FALSE)
+
+write.csv(Savanna.final, file = "./Savanna_final_CUFU_LT_2023.csv", row.names = FALSE)
+
+write.csv(Martens.final, file = "./Martens_final_CUFU_LT_2023.csv", row.names = FALSE)
+
+write.csv(Slater.final, file = "./Slater_final_CUFU_LT_2023.csv", row.names = FALSE)
+
+write.csv(OV.final, file = "./OtherVarieties_final_CUFU_LT_2023.csv", row.names = FALSE)
+```
