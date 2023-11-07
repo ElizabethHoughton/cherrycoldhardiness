@@ -43,7 +43,16 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                           sweet cherry cultivars 'Sweetheart' and 'Lapins' located within 
                                           the Okanagan Valley of British Columbia, Canada. These models use hourly air temperature data to estimate the lethal temperatures that would result in
                                         10%, 50%, and 90% damage (LT10, LT50, LT90) to the flower buds. It is important to note that estimations made using these models from the months 
-                                      of May to mid- to late-September generally are not meaniningful as sweet cherry flower buds often have not yet acclimated in this region.")), style = "font-size:17px;color:black;"),
+                                      of May to mid- to late-September generally are not meaniningful as sweet cherry flower buds often have not yet acclimated in this region. 
+                                          Additional information on these models and their development is available in the following publication:")), style = "font-size:17px;color:black;"),
+                                    
+                                    p("Houghton, E., Noonan, M.J., Hannam, K., Nelson, L.M., and Neilsen, D. 2023. 
+                                        Models for estimating the cold hardiness of sweet cherry",
+                                      HTML("(<i>Prunus avium</i> cv. ‘Sweetheart’ and ‘Lapins’)"), 
+                                      "in cold climate regions. HortSci. 58: 963-973.", style = "font-size:17px;color:black;",
+                                      a(href="https://doi.org/10.21273/HORTSCI17128-23", "https://doi.org/10.21273/HORTSCI17128-23", style = "font-size:17px;color:teal;"), #active weblink to GitHub
+                                      ".", style = "font-size:17px;color:black;"),
+                                    
                                     br(),
                                     p(
                            
@@ -51,7 +60,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                            br(),
                            hr(),
                            p(h4("Help and feedback", style = "color:black;")),
-                           p("For additional help, to submit feedback, or to report a bug, please contact: Elizabeth Houghton (elizabeth.houghton@ubc.ca). The website source content can be viewed on", style = "font-size:17px;color:black;",
+                           p("For additional help, to submit feedback, or to report a bug, please contact: Elizabeth Houghton (elizabeth.anne.houghton@gmail.com). The website source content can be viewed on", style = "font-size:17px;color:black;",
                              a(href="https://github.com/ElizabethHoughton/cherry-cold-hardiness", "GitHub", style = "font-size:15px;color:teal;"), #active weblink to GitHub
                              ".", style = "font-size:15px;color:black;"),
                            p(h4("Funding", style = "color:black;"), p("This project is supported by the Canadian Agricultural Partnership, a federal-provincial-territorial initiative, as well as the BC Cherry Association and a Private Foundation.
@@ -67,7 +76,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                              title = strong("About the Models"),
                              h3("Equations used to estimate cold hardiness", style = "color:black;font-size:27px;"),
                              br(),
-                             p("Seven seasons of 'Sweetheart' and three seasons of 'Lapins' sweet cherry flower bud cold hardiness measurements from orchards in Summerland, British Columbia, Canada were used to develop these models. Additionally, 
+                             p("Six seasons of 'Sweetheart' and three seasons of 'Lapins' sweet cherry flower bud cold hardiness measurements from orchards in Summerland, British Columbia, Canada were used to develop these models. Additionally, 
                              hourly air temperatures were aquired from near by weather stations. To improve models fit in the spring, when flower buds rapidly lose cold hardiness, models were split into two time periods: 
                              t1 (fall to later winter) and t2 (spring). The equations of the final models used to predict flower bud lethal temperatures during t1 (fall to late winter) are as follows:", style = "font-size:17px;color:black;"),
                              br(),
@@ -143,7 +152,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                         lethal temperatures. If you are interested in using your own hourly temperature data, it must be uploaded as a CSV file in the same format as
                                         the following example. A correct Climate ID is not required for this model to run, however, this template is in the same format that climate data is provided from the", style = "font-size:17px;color:black;",  
                                       a(href="https://climate.weather.gc.ca/historical_data/search_historic_data_e.html", "Government of Canada's historical climate database", style = "font-size:17px;color:teal;"),
-                                        ". A downloadable CSV file template has also been provided for you to use.", style = "font-size:17px;color:black;"), 
+                                        ". A downloadable CSV file template with example data inputs has also been provided for you to use.", style = "font-size:17px;color:black;"), 
                                     br(),
                                     img(src ="Data_example.jpg", height = 181.44, width = 820.08, style="display: block; margin-left: auto; margin-right: auto;"),  
                                     br(),
@@ -2200,8 +2209,8 @@ server <- function(input, output, session) {
   # Merge Calculated_LT10, Calculated_LT50, and Calculated_LT90, select only important columns (for data download)
   
   All_LTs <- reactive({
-    LTs <- merge(Calculated_LT10(), Calculated_LT50(), by="Temp_min")
-    LTs <- merge(LTs, Calculated_LT90(), by="Temp_min")
+    LTs <- merge(Calculated_LT10(), Calculated_LT50(), by.x="YYYYMMDD", by.y="YYYYMMDD50")
+    LTs <- merge(LTs, Calculated_LT90(), by.x="YYYYMMDD", by.y="YYYYMMDD90")
     # LTs <- cbind(Calculated_LT10(), Calculated_LT50(), Calculated_LT90())
     LTs <- LTs %>% dplyr::select(YYYYMMDD, LT10, LT50, LT90, Temp_min) # keep minimum air temps in data frame
     # LTs <- LTs  %>% 
@@ -2233,6 +2242,10 @@ server <- function(input, output, session) {
     LTs$Weather.data[LTs$YYYYMMDD >= as.Date(Sys.Date())] = "predictions"
     #sort by date
     LTs <- LTs[order(as.Date(LTs$YYYYMMDD, format="%Y-%m-%d")),]
+    LTs <- LTs  %>% 
+       dplyr::rename("YYYY-MM-DD" = "YYYYMMDD")
+    LTs <- LTs  %>% 
+      dplyr::rename("Temp.min_C" = "Temp_min")
     LTs
   })
   
