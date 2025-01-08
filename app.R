@@ -26,9 +26,11 @@ library(tidyr)
 library(leaflet)
 library(ChillModels)
 
-# remove it from a funciton when deploying it on shinyapp.io
+# Updated Jan 2025
+# remove it from a function when deploying it on shinyapp.io
 #cherrycoldhardiness <- function() {
 # the user interface
+
 ui <- fluidPage(theme = shinytheme("flatly"),
                 # Navbar title
                 titlePanel(HTML("<b>Estimating the Cold Hardiness of Sweet Cherry in Cold Climate Regions</b>")),
@@ -152,7 +154,9 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                         lethal temperatures. If you are interested in using your own hourly temperature data, it must be uploaded as a CSV file in the same format as
                                         the following example. A correct Climate ID is not required for this model to run, however, this template is in the same format that climate data is provided from the", style = "font-size:17px;color:black;",  
                                       a(href="https://climate.weather.gc.ca/historical_data/search_historic_data_e.html", "Government of Canada's historical climate database", style = "font-size:17px;color:teal;"),
-                                        ". A downloadable CSV file template with example data inputs has also been provided for you to use.", style = "font-size:17px;color:black;"), 
+                                      ". A downloadable CSV file template with example data inputs has also been provided for you to use.", style = "font-size:17px;color:black;", 
+                                      HTML(" If you would like to use your own weather data, the <b>'Use my own data' option must be selected</b> under the 'Or choose closest weather station' tab.")
+                                      ),
                                     br(),
                                     img(src ="Data_example.jpg", height = 181.44, width = 820.08, style="display: block; margin-left: auto; margin-right: auto;"),  
                                     br(),
@@ -162,16 +166,18 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                     br(),
                                     h3("Don't have your own weather data?", style = "color:black;font-size:27px;"),
                                     br(),
-                                    p("Choose one of four locations currently available and hourly temperature data from the", style = "font-size:17px;color:black;",
+                                    p("Choose one of five locations currently available and hourly temperature data from the", style = "font-size:17px;color:black;",
                                       a(href="https://climate.weather.gc.ca/historical_data/search_historic_data_e.html", "Government of Canada's historical climate database", style = "font-size:17px;color:teal;"),
                                       "will be used in these models. You can find the exact weather stations used at each location here:", style = "font-size:17px;color:black;",
-                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2007-11-30%7C2021-08-03&dlyRange=2005-01-01%7C2021-08-02&mlyRange=%7C&StationID=46987&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=2&searchMethod=contains&Month=8&Day=3&txtStationName=vernon&timeframe=1&Year=2021", "Vernon", style = "font-size:17px;color:teal;"),
+                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2007-11-30%7C2021-08-03&dlyRange=2005-01-01%7C2021-08-02&mlyRange=%7C&StationID=46987&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=2&searchMethod=contains&txtStationName=vernon&timeframe=1&time=LST&time=LST&Year=2025&Month=1&Day=1#", "Vernon", style = "font-size:17px;color:teal;"),
                                       ",",
-                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-12-13%7C2021-08-03&dlyRange=2013-12-16%7C2021-08-02&mlyRange=%7C&StationID=51117&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=16&searchMethod=contains&Month=8&Day=3&txtStationName=kelowna&timeframe=1&Year=2021", "Kelowna", style = "font-size:17px;color:teal;"),
+                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-12-13%7C2021-08-03&dlyRange=2013-12-16%7C2021-08-02&mlyRange=%7C&StationID=51117&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=16&searchMethod=contains&txtStationName=kelowna&timeframe=1&time=LST&time=LST&Year=2025&Month=1&Day=1#", "Kelowna", style = "font-size:17px;color:teal;"),
                                       ",",
-                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=1994-02-01%7C2021-08-03&dlyRange=1990-06-01%7C2021-08-02&mlyRange=1990-01-01%7C2006-11-01&StationID=979&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=3&searchMethod=contains&Month=8&Day=3&txtStationName=summerland&timeframe=1&Year=2021", "Summerland", style = "font-size:17px;color:teal;"),
+                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=1994-02-01%7C2021-08-03&dlyRange=1990-06-01%7C2021-08-02&mlyRange=1990-01-01%7C2006-11-01&StationID=979&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=3&searchMethod=contains&txtStationName=summerland&timeframe=1&time=LST&time=LST&Year=2025&Month=1&Day=1#", "Summerland", style = "font-size:17px;color:teal;"),
                                       ",",
-                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-05-07%7C2021-08-03&dlyRange=2012-05-10%7C2021-08-02&mlyRange=%7C&StationID=50269&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=1&searchMethod=contains&Month=8&Day=3&txtStationName=penticton&timeframe=1&Year=2021", "Penticton", style = "font-size:17px;color:teal;"),
+                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=2012-05-07%7C2021-08-03&dlyRange=2012-05-10%7C2021-08-02&mlyRange=%7C&StationID=50269&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2021&selRowPerPage=25&Line=1&searchMethod=contains&txtStationName=penticton&timeframe=1&time=LST&time=LST&Year=2025&Month=1&Day=1#", "Penticton", style = "font-size:17px;color:teal;"),
+                                      ",",
+                                      a(href="https://climate.weather.gc.ca/climate_data/hourly_data_e.html?hlyRange=1994-02-01%7C2025-01-06&dlyRange=1993-05-01%7C2025-01-06&mlyRange=1993-01-01%7C2006-10-01&StationID=6838&Prov=BC&urlExtension=_e.html&searchType=stnName&optLimit=yearRange&StartYear=1840&EndYear=2025&selRowPerPage=25&Line=1&searchMethod=contains&txtStationName=creston&timeframe=1&time=LST&time=LST&Year=2025&Month=1&Day=1#", "Creston", style = "font-size:17px;color:teal;"),
                                       ". If you select one of these weather stations, three days worth of weather forecast from", style = "font-size:17px;color:black;",
                                       a(href="https://openweathermap.org", "OpenWeather", style = "font-size:17px;color:teal;"),
                                       HTML(" will also be inputted to make predictions using these models. If the Government of Canada's historical climate database website is undergoing maintenance or has not been updated with the appropriate data, this option will not work and you will get the message <i>'An error has occurred. Check your logs or contact the app author for clarification.'</i> You can still upload data to the website to be inputted into the models if this occurs.
@@ -191,11 +197,12 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                  fileInput("csv_input", "Import CSV file of climate data", accept = ".csv", multiple = TRUE),
                                  
                                  # Drop down menu to select a location to pull weather data from Gov. of Canada's Historic Climate database
-                                 selectInput("location", "Or choose closest weather station", choices = c("Not Selected"= "not_sel",
+                                 selectInput("location", "Or choose closest weather station", choices = c("Use my own data"= "not_sel",
                                                                                                           "Penticton"="penticton",
                                                                                                           "Summerland"="summerland",
                                                                                                           "Kelowna"="kelowna",
-                                                                                                          "Vernon"="vernon"
+                                                                                                          "Vernon"="vernon",
+                                                                                                          "Creston"="creston"
                                  )),
                                  
                                  selectInput("variety", "Select sweet cherry variety", choices = c("Sweetheart"="sweetheart",
@@ -1103,21 +1110,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
+      
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1129,35 +1484,36 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
-        #average out daily predictions incase there are repeats
+        #average out daily predictions in case there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
         
         # create a data frame that matches gov. of canada
@@ -1231,21 +1587,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1257,33 +1961,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)        
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -1363,21 +2068,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1389,33 +2442,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -1491,21 +2545,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1517,33 +2919,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -1623,21 +3026,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1649,33 +3400,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -1751,21 +3503,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1777,33 +3877,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -1883,21 +3984,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -1909,33 +4358,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -2012,21 +4462,369 @@ server <- function(input, output, session) {
         API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
         units = "metric"
         
-        #to get todays hourly forcast
-        url <- paste0("http://api.openweathermap.org/data/2.5/onecall/timemachine?lat=",lat
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
                       , "&lon=", lon
-                      , "&dt=", my_dt
+                      , "&dt=", my_dt_t0
                       , "&appid=", API_key
                       , "&units=", units)
         ow <- fromJSON(url)
-        hourly <- ow$hourly
-        hourly$dt <- as.POSIXct(hourly$dt, origin = "1970-01-01", tz = 'UTC')
-        hourly <- hourly %>% tidyr::unnest(weather)
-        hourly <- hourly %>% 
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
           dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
         
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
         #to get 2 days of hourly forecasts
-        url2 <- paste0("http://api.openweathermap.org/data/2.5/onecall?lat=",lat
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
                        , "&lon=", lon
                        , "&dt=", my_dt
                        , "&appid=", API_key
@@ -2038,33 +4836,34 @@ server <- function(input, output, session) {
         hourly2 <- hourly2 %>% 
           dplyr::select(dt, temp)
         
-        #get every 3hr forecast data
-        hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
-          owmr_as_tibble()
-        #select dt_txt and temp
-        hourly3 <- hourly3 %>% 
-          dplyr::select(dt_txt, temp)
-        
-        #convert date time
-        hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
-        
-        # make it into a list
-        hourly3 <- data.frame(hourly3)
-        
-        # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
-        # interpolate the hourly temperatures
-        dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
-        hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
-        
-        # rename to match other data frames
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(dt = dt_txt)
-        
-        hourly3 <- hourly3 %>% 
-          dplyr::rename(temp = VIStot)
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
         
         # merge all predictions based on dt, average values if they differ
-        forecast <- rbind(hourly, hourly2, hourly3)
+        forecast <- rbind(hourly, hourly2)
         
         #average out daily predictions incase there are repeats
         forecast <- stats::aggregate(temp ~ dt, forecast, mean)
@@ -2116,6 +4915,967 @@ server <- function(input, output, session) {
         
       }
       
+      ############################################################################################################################################################################################################     
+      
+      ###################################################
+      # if creston is selected from the drop down menu
+    } else if (input$location == "creston"){ 
+      # if the current date is in the winter-spring (before June)
+      if(current_month < 6){                    
+        creston_station <- data.frame(StationID = c(6838),
+                                         start = (last_year),
+                                         end = (current_year))
+        met <- getData(creston_station, folder = "./creston", verbose = FALSE)
+        creston_data <- dplyr::bind_rows(met)
+        # select data from august the year prior to yesterdays date
+        creston_data <- creston_data %>% dplyr::filter(creston_data[,6] >= select_date1$FROM & 
+                                                               creston_data[,6] <= select_date1$YDAY)
+        
+        creston_data$Date.Time.LST <- as.POSIXct(creston_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
+        # remove the first column
+        infile = creston_data[,-1]
+        
+        # make predictions
+        lat = 49.0817
+        lon = -116.5007
+        # this must be as.numeric from datetime
+        my_dt = as.numeric(as.POSIXct(strftime(Sys.Date()-0)))
+        dt = as.numeric(as.POSIXct(strftime(Sys.Date()-0)))
+        API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
+        units = "metric"
+        
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t0
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
+          dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
+        #to get 2 days of hourly forecasts
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
+                       , "&lon=", lon
+                       , "&dt=", my_dt
+                       , "&appid=", API_key
+                       , "&units=", units)
+        ow2 <- fromJSON(url2)
+        hourly2 <- ow2$hourly
+        hourly2$dt <- as.POSIXct(hourly2$dt, origin = "1970-01-01", tz = 'UTC')
+        hourly2 <- hourly2 %>% tidyr::unnest(weather)
+        hourly2 <- hourly2 %>% 
+          dplyr::select(dt, temp)
+        
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
+        
+        # merge all predictions based on dt, average values if they differ
+        forecast <- rbind(hourly, hourly2)
+        
+        #average out daily predictions in case there are repeats
+        forecast <- stats::aggregate(temp ~ dt, forecast, mean)
+        
+        # create a data frame that matches gov. of canada
+        Longitude <- rep(c("-116.5007"), times=nrow(forecast))
+        Latitude <- rep(c("49.0817"), times=nrow(forecast))
+        Station.Name <- rep(c("Creston"), times=nrow(forecast))
+        ClimateID <- rep(c("NA"), times=nrow(forecast))
+        Date.Time.LST <- forecast$dt
+        Year <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%Y"))
+        Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
+        Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
+        Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Temp.degC <- forecast$temp
+        Temp.Flag <- rep(c("NA"), times=nrow(forecast))
+        Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
+        Dew.Point.Temp.Flag <- rep(c("NA"), times=nrow(forecast))
+        Rel.Hum <- rep(c("NA"), times=nrow(forecast))
+        Rel.Hum.Flag <- rep(c("NA"), times=nrow(forecast))
+        Precip.Amount.mm <- rep(c("NA"), times=nrow(forecast))
+        Precip.Amount.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Dir.10s.deg <- rep(c("NA"), times=nrow(forecast))
+        Wind.Dir.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Spd.km.h <- rep(c("NA"), times=nrow(forecast))
+        Wind.Spd.Flag <- rep(c("NA"), times=nrow(forecast))
+        Visibility.km <- rep(c("NA"), times=nrow(forecast))
+        Visibility.Flag <- rep(c("NA"), times=nrow(forecast))
+        Stn.Press.kPa <- rep(c("NA"), times=nrow(forecast))
+        Stn.Press.Flag <- rep(c("NA"), times=nrow(forecast))
+        Hmdx <- rep(c("NA"), times=nrow(forecast))
+        Hmdx.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Chill <- rep(c("NA"), times=nrow(forecast))
+        Wind.Chill.Flag <- rep(c("NA"), times=nrow(forecast))
+        Weather <- rep(c("NA"), times=nrow(forecast))
+        
+        #create data frame
+        Creston_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
+                                          Year, Month, Day, Time.LST,
+                                          Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
+                                          Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
+                                          Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
+                                          Wind.Spd.Flag, Visibility.km, Visibility.Flag,
+                                          Stn.Press.kPa, Stn.Press.Flag, Hmdx, Hmdx.Flag,
+                                          Wind.Chill, Wind.Chill.Flag, Weather)
+        
+        # add predictions to data frame
+        infile <- rbind(infile, Creston_forecast)
+        
+      }else{
+        
+        # if the current date is in the spring-winter (after June)
+        creston_station <- data.frame(StationID = c(6838),
+                                         start = (current_year),
+                                         end = (current_year))
+        met <- getData(creston_station, folder = "./creston", verbose = FALSE)
+        creston_data <- dplyr::bind_rows(met)
+        # select data from august this year to yesterday's date
+        creston_data <- creston_data %>% dplyr::filter(creston_data[,6] >= select_date2$FROM & 
+                                                               creston_data[,6] <= select_date2$YDAY)
+        
+        creston_data$Date.Time.LST <- as.POSIXct(creston_data$Date.Time.LST, format="%Y-%m-%d %H:%M") #NEED TO ADD THIS DATE-TIME CONVERSION IN
+        
+        # remove the first column
+        infile <- creston_data[,-1]
+        
+        # make predictions
+        lat = 49.0817
+        lon = -116.5007
+        # this must be as.numeric from datetime
+        my_dt = as.numeric(as.POSIXct(strftime(Sys.Date()-0)))
+        dt = as.numeric(as.POSIXct(strftime(Sys.Date()-0)))
+        API_key = "d99f77bed68ff58e6dec11cdc2bbb127"
+        units = "metric"
+        
+        # make a dataframe with today's date
+        my_dt_series <- as.data.frame(Sys.Date())
+        # replicate these entries for number of hours
+        my_dt_series <- my_dt_series[rep(row.names(my_dt_series), times = 24), ]
+        my_dt_series <- as.data.frame(my_dt_series)
+        #rename column
+        colnames(my_dt_series)[1] <- c("date")
+        # break into year month date
+        my_dt_series <- my_dt_series %>% 
+          mutate(
+            year = year(date),
+            month = month(date),
+            day = day(date),
+            hour = c(0:23),
+            minute = c(0)
+          )
+        # make datetime column (dt)
+        my_dt_series <- my_dt_series %>% 
+          select(year, month, day, hour, minute) %>% 
+          mutate(dt = make_datetime(year, month, day, hour, minute))
+        
+        # new as.numeric datetime for the current day's hourly datetime
+        # to get today's hourly forecast you must now request each hour of the day for today's date
+        my_dt_t0 <- as.numeric(as.POSIXct(strftime(my_dt_series[1,6])))
+        my_dt_t1 <- as.numeric(as.POSIXct(strftime(my_dt_series[2,6])))
+        my_dt_t2 <- as.numeric(as.POSIXct(strftime(my_dt_series[3,6])))
+        my_dt_t3 <- as.numeric(as.POSIXct(strftime(my_dt_series[4,6])))
+        my_dt_t4 <- as.numeric(as.POSIXct(strftime(my_dt_series[5,6])))
+        my_dt_t5 <- as.numeric(as.POSIXct(strftime(my_dt_series[6,6])))
+        my_dt_t6 <- as.numeric(as.POSIXct(strftime(my_dt_series[7,6])))
+        my_dt_t7 <- as.numeric(as.POSIXct(strftime(my_dt_series[8,6])))
+        my_dt_t8 <- as.numeric(as.POSIXct(strftime(my_dt_series[9,6])))
+        my_dt_t9 <- as.numeric(as.POSIXct(strftime(my_dt_series[10,6])))
+        my_dt_t10 <- as.numeric(as.POSIXct(strftime(my_dt_series[11,6])))
+        my_dt_t11 <- as.numeric(as.POSIXct(strftime(my_dt_series[12,6])))
+        my_dt_t12 <- as.numeric(as.POSIXct(strftime(my_dt_series[13,6])))
+        my_dt_t13 <- as.numeric(as.POSIXct(strftime(my_dt_series[14,6])))
+        my_dt_t14 <- as.numeric(as.POSIXct(strftime(my_dt_series[15,6])))
+        my_dt_t15 <- as.numeric(as.POSIXct(strftime(my_dt_series[16,6])))
+        my_dt_t16 <- as.numeric(as.POSIXct(strftime(my_dt_series[17,6])))
+        my_dt_t17 <- as.numeric(as.POSIXct(strftime(my_dt_series[18,6])))
+        my_dt_t18 <- as.numeric(as.POSIXct(strftime(my_dt_series[19,6])))
+        my_dt_t19 <- as.numeric(as.POSIXct(strftime(my_dt_series[20,6])))
+        my_dt_t20 <- as.numeric(as.POSIXct(strftime(my_dt_series[21,6])))
+        my_dt_t21 <- as.numeric(as.POSIXct(strftime(my_dt_series[22,6])))
+        my_dt_t22 <- as.numeric(as.POSIXct(strftime(my_dt_series[23,6])))
+        my_dt_t23 <- as.numeric(as.POSIXct(strftime(my_dt_series[24,6])))
+        
+        # 0:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t0
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t0 <- ow$data
+        hourly_t0 <- hourly_t0 %>% 
+          dplyr::select(dt, temp)
+        hourly_t0$dt <- as.POSIXct(hourly_t0$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 1:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t1
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t1 <- ow$data
+        hourly_t1 <- hourly_t1 %>% 
+          dplyr::select(dt, temp)
+        hourly_t1$dt <- as.POSIXct(hourly_t1$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 2:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t2
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t2 <- ow$data
+        hourly_t2 <- hourly_t2 %>% 
+          dplyr::select(dt, temp)
+        hourly_t2$dt <- as.POSIXct(hourly_t2$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 3:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t3
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t3 <- ow$data
+        hourly_t3 <- hourly_t3 %>% 
+          dplyr::select(dt, temp)
+        hourly_t3$dt <- as.POSIXct(hourly_t3$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 4:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t4
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t4 <- ow$data
+        hourly_t4 <- hourly_t4 %>% 
+          dplyr::select(dt, temp)
+        hourly_t4$dt <- as.POSIXct(hourly_t4$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 5:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t5
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t5 <- ow$data
+        hourly_t5 <- hourly_t5 %>% 
+          dplyr::select(dt, temp)
+        hourly_t5$dt <- as.POSIXct(hourly_t5$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 6:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t6
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t6 <- ow$data
+        hourly_t6 <- hourly_t6 %>% 
+          dplyr::select(dt, temp)
+        hourly_t6$dt <- as.POSIXct(hourly_t6$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 7:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t7
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t7 <- ow$data
+        hourly_t7 <- hourly_t7 %>% 
+          dplyr::select(dt, temp)
+        hourly_t7$dt <- as.POSIXct(hourly_t7$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 8:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t8
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t8 <- ow$data
+        hourly_t8 <- hourly_t8 %>% 
+          dplyr::select(dt, temp)
+        hourly_t8$dt <- as.POSIXct(hourly_t8$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 9:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t9
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t9 <- ow$data
+        hourly_t9 <- hourly_t9 %>% 
+          dplyr::select(dt, temp)
+        hourly_t9$dt <- as.POSIXct(hourly_t9$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 10:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t10
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t10 <- ow$data
+        hourly_t10 <- hourly_t10 %>% 
+          dplyr::select(dt, temp)
+        hourly_t10$dt <- as.POSIXct(hourly_t10$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 11:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t11
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t11 <- ow$data
+        hourly_t11 <- hourly_t11 %>% 
+          dplyr::select(dt, temp)
+        hourly_t11$dt <- as.POSIXct(hourly_t11$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 12:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t12
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t12 <- ow$data
+        hourly_t12 <- hourly_t12 %>% 
+          dplyr::select(dt, temp)
+        hourly_t12$dt <- as.POSIXct(hourly_t12$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 13:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t13
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t13 <- ow$data
+        hourly_t13 <- hourly_t13 %>% 
+          dplyr::select(dt, temp)
+        hourly_t13$dt <- as.POSIXct(hourly_t13$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 14:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t14
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t14 <- ow$data
+        hourly_t14 <- hourly_t14 %>% 
+          dplyr::select(dt, temp)
+        hourly_t14$dt <- as.POSIXct(hourly_t14$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 15:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t15
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t15 <- ow$data
+        hourly_t15 <- hourly_t15 %>% 
+          dplyr::select(dt, temp)
+        hourly_t15$dt <- as.POSIXct(hourly_t15$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 16:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t16
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t16 <- ow$data
+        hourly_t16 <- hourly_t16 %>% 
+          dplyr::select(dt, temp)
+        hourly_t16$dt <- as.POSIXct(hourly_t16$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 17:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t17
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t17 <- ow$data
+        hourly_t17 <- hourly_t17 %>% 
+          dplyr::select(dt, temp)
+        hourly_t17$dt <- as.POSIXct(hourly_t17$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 18:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t18
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t18 <- ow$data
+        hourly_t18 <- hourly_t18 %>% 
+          dplyr::select(dt, temp)
+        hourly_t18$dt <- as.POSIXct(hourly_t18$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 19:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t19
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t19 <- ow$data
+        hourly_t19 <- hourly_t19 %>% 
+          dplyr::select(dt, temp)
+        hourly_t19$dt <- as.POSIXct(hourly_t19$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 20:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t20
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t20 <- ow$data
+        hourly_t20 <- hourly_t20 %>% 
+          dplyr::select(dt, temp)
+        hourly_t20$dt <- as.POSIXct(hourly_t20$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 21:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t21
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t21 <- ow$data
+        hourly_t21 <- hourly_t21 %>% 
+          dplyr::select(dt, temp)
+        hourly_t21$dt <- as.POSIXct(hourly_t21$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 22:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t22
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t22 <- ow$data
+        hourly_t22 <- hourly_t22 %>% 
+          dplyr::select(dt, temp)
+        hourly_t22$dt <- as.POSIXct(hourly_t22$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # 23:00
+        url <- paste0("http://api.openweathermap.org/data/3.0/onecall/timemachine?lat=",lat
+                      , "&lon=", lon
+                      , "&dt=", my_dt_t23
+                      , "&appid=", API_key
+                      , "&units=", units)
+        ow <- fromJSON(url)
+        hourly_t23 <- ow$data
+        hourly_t23 <- hourly_t23 %>% 
+          dplyr::select(dt, temp)
+        hourly_t23$dt <- as.POSIXct(hourly_t23$dt, origin = "1970-01-01", tz = 'UTC')
+        
+        # combine all hourly temperatures into one dataframe called hourly
+        hourly <- rbind(hourly_t0,
+                        hourly_t1,
+                        hourly_t2,
+                        hourly_t3,
+                        hourly_t4,
+                        hourly_t5,
+                        hourly_t6,
+                        hourly_t7,
+                        hourly_t8,
+                        hourly_t9,
+                        hourly_t10,
+                        hourly_t11,
+                        hourly_t12,
+                        hourly_t13,
+                        hourly_t14,
+                        hourly_t15,
+                        hourly_t16,
+                        hourly_t17,
+                        hourly_t18,
+                        hourly_t19,
+                        hourly_t20,
+                        hourly_t21,
+                        hourly_t22,
+                        hourly_t23)
+        #to get 2 days of hourly forecasts
+        url2 <- paste0("http://api.openweathermap.org/data/3.0/onecall?lat=",lat
+                       , "&lon=", lon
+                       , "&dt=", my_dt
+                       , "&appid=", API_key
+                       , "&units=", units)
+        ow2 <- fromJSON(url2)
+        hourly2 <- ow2$hourly
+        hourly2$dt <- as.POSIXct(hourly2$dt, origin = "1970-01-01", tz = 'UTC')
+        hourly2 <- hourly2 %>% tidyr::unnest(weather)
+        hourly2 <- hourly2 %>% 
+          dplyr::select(dt, temp)
+        
+        # now have to omit three day weather forecast due to changes in OpenWeather API 3.0
+        # #get every 3hr forecast data
+        # hourly3 <- get_forecast(lat = lat, lon = lon, units = units) %>%
+        #   owmr_as_tibble()
+        # #select dt_txt and temp
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::select(dt_txt, temp)
+        # 
+        # #convert date time
+        # hourly3$dt_txt <- as.POSIXct(hourly3$dt_txt, format="%Y-%m-%d %H:%M:%S")
+        # 
+        # # make it into a list
+        # hourly3 <- data.frame(hourly3)
+        # 
+        # # make a data frame of hourly dates ranging from the first to last date/time in three hour data, 
+        # # interpolate the hourly temperatures
+        # dt <- seq.POSIXt(hourly3$dt_txt[1], tail(hourly3$dt_txt, n=1), by='1 hour')
+        # hourly3 <- data.frame(dt_txt=dt, VIStot=approx(hourly3$dt_txt, hourly3$temp, dt)$y)
+        # 
+        # # rename to match other data frames
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(dt = dt_txt)
+        # 
+        # hourly3 <- hourly3 %>% 
+        #   dplyr::rename(temp = VIStot)
+        
+        # merge all predictions based on dt, average values if they differ
+        forecast <- rbind(hourly, hourly2)        
+        
+        #average out daily predictions incase there are repeats
+        forecast <- stats::aggregate(temp ~ dt, forecast, mean)
+        
+        # create a data frame that matches gov. of canada
+        Longitude <- rep(c("-116.5007"), times=nrow(forecast))
+        Latitude <- rep(c("49.0817"), times=nrow(forecast))
+        Station.Name <- rep(c("Creston"), times=nrow(forecast))
+        ClimateID <- rep(c("NA"), times=nrow(forecast))
+        Date.Time.LST <- forecast$dt
+        Year <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%Y"))
+        Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
+        Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
+        Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Temp.degC <- forecast$temp
+        Temp.Flag <- rep(c("NA"), times=nrow(forecast))
+        Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
+        Dew.Point.Temp.Flag <- rep(c("NA"), times=nrow(forecast))
+        Rel.Hum <- rep(c("NA"), times=nrow(forecast))
+        Rel.Hum.Flag <- rep(c("NA"), times=nrow(forecast))
+        Precip.Amount.mm <- rep(c("NA"), times=nrow(forecast))
+        Precip.Amount.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Dir.10s.deg <- rep(c("NA"), times=nrow(forecast))
+        Wind.Dir.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Spd.km.h <- rep(c("NA"), times=nrow(forecast))
+        Wind.Spd.Flag <- rep(c("NA"), times=nrow(forecast))
+        Visibility.km <- rep(c("NA"), times=nrow(forecast))
+        Visibility.Flag <- rep(c("NA"), times=nrow(forecast))
+        Stn.Press.kPa <- rep(c("NA"), times=nrow(forecast))
+        Stn.Press.Flag <- rep(c("NA"), times=nrow(forecast))
+        Hmdx <- rep(c("NA"), times=nrow(forecast))
+        Hmdx.Flag <- rep(c("NA"), times=nrow(forecast))
+        Wind.Chill <- rep(c("NA"), times=nrow(forecast))
+        Wind.Chill.Flag <- rep(c("NA"), times=nrow(forecast))
+        Weather <- rep(c("NA"), times=nrow(forecast))
+        
+        #create data frame
+        Creston_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
+                                          Year, Month, Day, Time.LST,
+                                          Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
+                                          Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
+                                          Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
+                                          Wind.Spd.Flag, Visibility.km, Visibility.Flag,
+                                          Stn.Press.kPa, Stn.Press.Flag, Hmdx, Hmdx.Flag,
+                                          Wind.Chill, Wind.Chill.Flag, Weather)
+        
+        # add predictions to data frame
+        infile <- rbind(infile, Creston_forecast)
+        
+      }
+  
+      ###############################################################################################################################################################################################################################################################
       
       # if nothing is selected or uploaded (so site doesn't immediately crash)
     } else if (is.null(infile)) {
@@ -2138,11 +5898,11 @@ server <- function(input, output, session) {
   # map_data$lat <- as.numeric(map_data$lat)
   # map_data$long <- as.numeric(map_data$long)
   
-  lat <- c(49.5626, 49.4625, 49.9408, 50.22)
+  lat <- c(49.5626, 49.4625, 49.9408, 50.22, 49.08)
   lat <- as.data.frame(lat)
   map_data <- lat
-  map_data$long <- c(-119.6487, -119.602, -119.4002, -119.19)
-  map_data$station <- c('Summerland', "Penticton", "Kelowna", "Vernon")
+  map_data$long <- c(-119.6487, -119.602, -119.4002, -119.19, -116.50)
+  map_data$station <- c('Summerland', "Penticton", "Kelowna", "Vernon", "Creston")
     
     map_data$lat <- as.numeric(map_data$lat)
     map_data$long <- as.numeric(map_data$long)
