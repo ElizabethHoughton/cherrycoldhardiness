@@ -379,6 +379,7 @@ draw_plot_LT90 <- function(Calculated_LT90)
 CU_FU <- function(data_input=NULL) {
   #uses the data_input from the .csv upload
   # select columns of interest
+  data_input <- subset(data_input, select = -c(Flag)) # April 2025, remove new 'Flag' column
   data_input <- data_input[,c(3,5:10)]
   # rename columns
   colnames(data_input) <- c("Station.Name", "Date", "Year", "Month", "Day", "Time", "Temp")
@@ -981,7 +982,7 @@ getData <- function(stations, folder, timeframe = c("hourly", "daily", "monthly"
   out <- vector(mode = "list", length = nfiles)
   # changed hourly names to omit spaces
   hourlyNames <- c("Longitude", "Latitude", "Station.Name", "ClimateID", "Date.Time.LST", 
-                   "Year", "Month", "Day", "Time.LST",
+                   "Year", "Month", "Day", "Time.LST", "Flag", # April 2025, noticed additional 'Flag' column added to datasets so had to add that here
                    "Temp.degC", "Temp.Flag", "Dew.Point.Temp.degC",
                    "Dew.Point.Temp.Flag", "Rel.Hum", "Rel.Hum.Flag", "Precip.Amount.mm", "Precip.Amount.Flag", 
                    "Wind.Dir.10s.deg", "Wind.Dir.Flag", "Wind.Spd.km.h",
@@ -1526,6 +1527,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -1550,7 +1552,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Summerland_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                          Year, Month, Day, Time.LST,
+                                          Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                           Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                           Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                           Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -2003,6 +2005,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -2027,7 +2030,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Summerland_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                          Year, Month, Day, Time.LST,
+                                          Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                           Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                           Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                           Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -2484,6 +2487,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -2508,7 +2512,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Penticton_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                         Year, Month, Day, Time.LST,
+                                         Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                          Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                          Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                          Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -2961,6 +2965,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -2985,7 +2990,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Penticton_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                         Year, Month, Day, Time.LST,
+                                         Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                          Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                          Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                          Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -3442,6 +3447,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -3466,7 +3472,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Kelowna_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                       Year, Month, Day, Time.LST,
+                                       Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                        Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                        Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                        Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -3919,6 +3925,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -3943,7 +3950,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Kelowna_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                       Year, Month, Day, Time.LST,
+                                       Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                        Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                        Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                        Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -4400,6 +4407,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -4424,7 +4432,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Vernon_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                      Year, Month, Day, Time.LST,
+                                      Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                       Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                       Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                       Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -4878,6 +4886,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -4902,7 +4911,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Vernon_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                      Year, Month, Day, Time.LST,
+                                      Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                       Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                       Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                       Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -5361,6 +5370,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -5385,7 +5395,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Creston_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                          Year, Month, Day, Time.LST,
+                                          Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                           Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                           Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                           Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
@@ -5838,6 +5848,7 @@ server <- function(input, output, session) {
         Month <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%m"))
         Day <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%d"))
         Time.LST <- c(format(as.POSIXct(forecast$dt,format="%Y-%m-%d %H:%M:%S"),"%H:%M:%S"))
+        Flag <- rep(c("NA"), times=nrow(forecast)) # April 2025, added because 'Flag' column added to Gov. of Canada historic climate datasets
         Temp.degC <- forecast$temp
         Temp.Flag <- rep(c("NA"), times=nrow(forecast))
         Dew.Point.Temp.degC <- rep(c("NA"), times=nrow(forecast))
@@ -5862,7 +5873,7 @@ server <- function(input, output, session) {
         
         #create data frame
         Creston_forecast <- data.frame(Longitude, Latitude, Station.Name, ClimateID, Date.Time.LST, 
-                                          Year, Month, Day, Time.LST,
+                                          Year, Month, Day, Time.LST, Flag, #April 2025 added 'Flag'
                                           Temp.degC, Temp.Flag, Dew.Point.Temp.degC,
                                           Dew.Point.Temp.Flag, Rel.Hum, Rel.Hum.Flag, Precip.Amount.mm, Precip.Amount.Flag, 
                                           Wind.Dir.10s.deg, Wind.Dir.Flag, Wind.Spd.km.h,
