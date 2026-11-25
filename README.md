@@ -9,3 +9,5 @@ The corresponding publication is as follows: Houghton, E., Noonan, M.J., Hannam,
 January 2025 Update: Update includes OpenWeather updates (API 3.0 from 2.5), instruction clarifications for using your own weather data, and an additional weather station link (Creston, BC). Due to OpenWeather API 3.0 updates, this website must now omit the third day of weather forecasting and stick to current day and two days in the future forecasts.
 
 April 2025 Update: Environment Canada Historic Weather data has added a data column 'Flag'. Code was updated to account for this additional data column.
+
+November 2026 Update: Added additional random forest model ('New Estimations' tab). Updated 'About the Models' tab (figures, additional rf model information). Updated graphs for data visualization and communication in 'Estimations' and 'New Estimations' tabs
